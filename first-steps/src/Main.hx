@@ -6,7 +6,11 @@ class Main {
 	static var game:Game;
 
 	static function main() {
-		Rl.initWindow(640, 480, "ray");
+		var windowBounds:RectangleGeometry = {
+			width: 640,
+			height: 480
+		}
+		Rl.initWindow(windowBounds.width, windowBounds.height, "ray");
 
 		// using VSYNC_HINT is better than setTargetFPS as it will use the GPU as a source for timing, which is more reliable
 		// more info here - https://bedroomcoders.co.uk/why-you-shouldnt-use-settargetfps-with-raylib/
@@ -14,9 +18,19 @@ class Main {
 		Rl.setWindowState(Rl.ConfigFlags.VSYNC_HINT);
 		// Rl.setTargetFPS(60);
 
-		game = new Game(game -> {
-			return new TestScene(game, Rl.Colors.GOLD);
-		});
+		var assets = new Assets([
+			BACKGROUND => "assets/bg-dogtooth.png"
+		]);
+
+		var bg:Texture2D = assets.textures[BACKGROUND];
+
+		var sceneBounds:RectangleGeometry = {
+			width: bg.width,
+			height: bg.height
+		}
+		var initScene = game -> return new TestScene(game, sceneBounds, Rl.Colors.GOLD);
+
+		game = new Game(initScene, windowBounds, assets);
 
 		while (!Rl.windowShouldClose()) {
 			game.update(Rl.getFrameTime());
@@ -38,13 +52,15 @@ class Main {
 
 class TestScene extends Scene {
 	var controller:Controller;
-	var background:Texture2D;
+	var background:Texture;
 	var player:Player;
 
 	public function init() {
-		background = Rl.loadTexture("assets/bg-dogtooth.png");
+		background = game.getTexture(BACKGROUND);
 
-		player = new Player(40, 60);
+		var x_init:Int= Std.int(bounds.width * 0.5);
+		var y_init:Int= Std.int(bounds.height * 0.5);
+		player = new Player(x_init, y_init);
 
 		controller = new Controller({
 			on_move_right: () -> player.move(1, 0),
@@ -57,8 +73,16 @@ class TestScene extends Scene {
 	public function update(elapsed_seconds:Float) {
 		controller.update();
 		player.update(elapsed_seconds);
-		game.camera.target.x = player.x;
-		game.camera.target.y = player.y;
+		if(
+				0 > player.x - player.size
+			|| 0 > player.y - player.size
+			|| player.x > bounds.width - player.size
+			|| player.y > bounds.height - player.size
+		){
+			player.stop();
+		}
+		
+		game.update_cameraCenter(player.x, player.y);
 	}
 
 	public function draw() {
@@ -68,12 +92,13 @@ class TestScene extends Scene {
 }
 
 class Player {
-	public var x(default, null):Int;
-	public var y(default, null):Int;
+	public var x:Int;
+	public var y:Int;
+
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
-	var x_vel_increment:Float = 50.0;
-	var y_vel_increment:Float = 50.0;
+	var x_vel_increment:Float = 100.0;
+	var y_vel_increment:Float = 100.0;
 
 	public var size:Int = 50;
 	public var color:RlColor = Rl.Colors.DARKPURPLE;
@@ -90,7 +115,7 @@ class Player {
 	}
 
 	public function draw() {
-		Rl.drawCircle(x, y, size, color);
+		Rl.drawCircle(x, y, size * 0.5, color);
 	}
 
 	public function move(x_direction:Int, y_direction:Int) {
@@ -98,4 +123,13 @@ class Player {
 		y_vel += y_direction * y_vel_increment;
 		trace('new velocities $x_vel $y_vel');
 	}
+
+	public function stop() {
+		x_vel = 0;
+		y_vel = 0;
+	}
+}
+
+enum abstract Textures(Int) from Int to Int {
+	var BACKGROUND;
 }
