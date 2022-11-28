@@ -3,17 +3,22 @@ import Rl;
 class Game {
 	var current_scene:Scene;
 	var windowBounds:RectangleGeometry;
+	var x_viewport_center:Int;
+	var y_viewport_center:Int;
+
 	var assets:Assets;
 
 	public var camera(default, null):Camera2D;
 
-	public function new(init:Game->Scene, windowBounds:RectangleGeometry, assets:Assets = null) {
+	public function new(scene_constructor:Game->Scene, windowBounds:RectangleGeometry, assets:Assets = null) {
 		this.assets = assets == null ? new Assets([]) : assets;
 		this.windowBounds = windowBounds;
-		
+		x_viewport_center = Std.int(windowBounds.width * 0.5);
+		y_viewport_center = Std.int(windowBounds.height * 0.5);
+
 		camera = Rl.Camera2D.create(Rl.Vector2.create(0, 0), Rl.Vector2.create(0, 0));
 
-		current_scene = init(this);
+		current_scene = scene_constructor(this);
 		current_scene.init();
 	}
 
@@ -45,6 +50,58 @@ class Game {
 		camera.offset.y = windowBounds.height * 0.5;
 		camera.target.x = x_target;
 		camera.target.y = y_target;
+	}
+
+	/**
+		Center camera on target
+		Do not let camera scroll outside bounds
+	**/
+	public function update_cameraCenterInsideBounds(x_target:Float, y_target:Float, x_boundary:Int, y_boundary:Int) {
+		// first center camera on target
+		update_cameraCenter(x_target, y_target);
+
+		// now if the target is close to an edge
+		// the camera offset will need adjusting away from 'center'
+
+		// half a screen away from left
+		var x_scroll_min = x_viewport_center;
+
+		// half a screen away from top
+		var y_scroll_min = y_viewport_center;
+
+		// half a screen away from right
+		var x_scroll_max = x_boundary - x_viewport_center;
+
+		// half a screen away from bottom
+		var y_scroll_max = y_boundary - y_viewport_center;
+
+		// if target is closer than half a screen to the left
+		if (x_target < x_scroll_min) {
+			// set camera offset to distance between target and edge
+			camera.offset.x = x_target;
+		}
+
+		// if target is closer than half a screen to the top
+		if (y_target < y_scroll_min) {
+			// set camera offset to distance between target and edge
+			camera.offset.y = y_target;
+		}
+
+		// if target is closer than half a screen to the right
+		if (x_target > x_scroll_max) {
+			// calculate distance offset between target and edge
+			var offset_distance = x_target - x_scroll_max;
+			// adjust camera offset
+			camera.offset.x = camera.offset.x + offset_distance;
+		}
+
+		// if target is closer than half a screen to the bottom
+		if (y_target > y_scroll_max) {
+			// calculate distance offset between target and edge
+			var offset_distance = camera.target.y - y_scroll_max;
+			// adjust camera offset
+			camera.offset.y = camera.offset.y + offset_distance;
+		}
 	}
 }
 

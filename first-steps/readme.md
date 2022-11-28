@@ -16,7 +16,7 @@ haxe build.hxml
 
 Currently the project consists of
 
- - a player object with simple velocity based movement
+ - a player object with simple velocity based movement (zero friction)
  - cursor key bindings to steer the player around
  - simple scene with a background
- - simple camera which centers on the player
+ - simple camera which centers on the player, and keeps within scene boundaries

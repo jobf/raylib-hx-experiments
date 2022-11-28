@@ -18,9 +18,7 @@ class Main {
 		Rl.setWindowState(Rl.ConfigFlags.VSYNC_HINT);
 		// Rl.setTargetFPS(60);
 
-		var assets = new Assets([
-			BACKGROUND => "assets/bg-dogtooth.png"
-		]);
+		var assets = new Assets([BACKGROUND => "assets/bg-dogtooth.png"]);
 
 		var bg:Texture2D = assets.textures[BACKGROUND];
 
@@ -58,8 +56,8 @@ class TestScene extends Scene {
 	public function init() {
 		background = game.getTexture(BACKGROUND);
 
-		var x_init:Int= Std.int(bounds.width * 0.5);
-		var y_init:Int= Std.int(bounds.height * 0.5);
+		var x_init:Int = Std.int(bounds.width * 0.5);
+		var y_init:Int = Std.int(bounds.height * 0.5);
 		player = new Player(x_init, y_init);
 
 		controller = new Controller({
@@ -73,16 +71,30 @@ class TestScene extends Scene {
 	public function update(elapsed_seconds:Float) {
 		controller.update();
 		player.update(elapsed_seconds);
-		if(
-				0 > player.x - player.size
-			|| 0 > player.y - player.size
-			|| player.x > bounds.width - player.size
-			|| player.y > bounds.height - player.size
-		){
-			player.stop();
+
+		// check if player is outside bounds
+		if (0 > player.x - player.size) {
+			player.stop_x();
+			// reset player position to within the bounds
+			player.x = player.size;
 		}
-		
-		game.update_cameraCenter(player.x, player.y);
+		if (player.x > bounds.width - player.size) {
+			player.stop_x();
+			// reset player position to within the bounds
+			player.x = bounds.width - player.size;
+		}
+		if (0 > player.y - player.size) {
+			player.stop_y();
+			// reset player position to within the bounds
+			player.y = player.size;
+		}
+		if (player.y > bounds.height - player.size) {
+			player.stop_y();
+			// reset player position to within the bounds
+			player.y = bounds.height - player.size;
+		}
+
+		game.update_cameraCenterInsideBounds(player.x, player.y, bounds.width, bounds.height);
 	}
 
 	public function draw() {
@@ -125,7 +137,15 @@ class Player {
 	}
 
 	public function stop() {
+		y_vel = 0;
 		x_vel = 0;
+	}
+
+	public function stop_x() {
+		x_vel = 0;
+	}
+
+	public function stop_y() {
 		y_vel = 0;
 	}
 }
