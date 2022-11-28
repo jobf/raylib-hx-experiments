@@ -119,7 +119,7 @@ abstract class Scene {
 
 	public var color(default, null):Color;
 
-	public function new(game:Game, bounds:RectangleGeometry, color:cpp.Struct<Color> = null) {
+	public function new(game:Game, bounds:RectangleGeometry, color:Color = null) {
 		this.game = game;
 		this.bounds = bounds;
 		this.color = color == null ? Rl.Colors.BLACK : color;
