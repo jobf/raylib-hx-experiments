@@ -76,30 +76,12 @@ class TestScene extends Scene {
 	public function update(elapsed_seconds:Float) {
 		controller.update();
 		player.update(elapsed_seconds);
+		collide_player_with_bounds();
+		collide_player_with_obstacles();
 
-		// check if player is outside bounds
-		if (0 > player.x - player.size) {
-			player.stop_x();
-			// reset player position to within the bounds
-			player.x = player.size;
-		}
-		if (player.x > bounds.width - player.size) {
-			player.stop_x();
-			// reset player position to within the bounds
-			player.x = bounds.width - player.size;
-		}
-		if (0 > player.y - player.size) {
-			player.stop_y();
-			// reset player position to within the bounds
-			player.y = player.size;
-		}
-		if (player.y > bounds.height - player.size) {
-			player.stop_y();
-			// reset player position to within the bounds
-			player.y = bounds.height - player.size;
-		}
-
-		game.update_cameraCenterInsideBounds(player.x, player.y, bounds.width, bounds.height);
+		var x_player = Std.int(player.position.x);
+		var y_player = Std.int(player.position.y);
+		game.update_cameraCenterInsideBounds(x_player, y_player, bounds.width, bounds.height);
 	}
 
 	public function draw() {
@@ -119,38 +101,79 @@ class TestScene extends Scene {
 
 	function place_obstacle(mouse_pos_screen:Vector2) {
 		var mouse_pos_in_world = Rl.getScreenToWorld2D(mouse_pos_screen, game.camera);
+		final size = 60;
+		var x_center_offset = Std.int(mouse_pos_in_world.x - (size * 0.5));
+		var y_center_offset = Std.int(mouse_pos_in_world.y - (size * 0.5));
 		obstacles.push({
-			x: Std.int(mouse_pos_in_world.x),
-			y: Std.int(mouse_pos_in_world.y),
+			box: Rl.Rectangle.create(
+				x_center_offset,
+				y_center_offset,
+				size,
+				size
+				)
 		});
+	}
+
+	function collide_player_with_bounds() {
+		// check if player is outside bounds
+		var size_player = player.radius * 2;
+		if (0 > player.position.x - size_player) {
+			player.stop_x();
+			// reset player position to within the bounds
+			player.position.x = size_player;
+		}
+		if (player.position.x > bounds.width - size_player) {
+			player.stop_x();
+			// reset player position to within the bounds
+			player.position.x = bounds.width - size_player;
+		}
+		if (0 > player.position.y - size_player) {
+			player.stop_y();
+			// reset player position to within the bounds
+			player.position.y = size_player;
+		}
+		if (player.position.y > bounds.height - size_player) {
+			player.stop_y();
+			// reset player position to within the bounds
+			player.position.y = bounds.height - size_player;
+		}
+	}
+
+	function collide_player_with_obstacles() {
+		for (obstacle in obstacles) {
+			if(Rl.checkCollisionCircleRec(player.position, player.radius, obstacle.box)){
+				player.stop();
+				// break because don't need to check the rest of the collisions as the player has now stopped.
+				break;
+			}
+		}
 	}
 }
 
 class Player {
-	public var x:Int;
-	public var y:Int;
-
+	public var position:Vector2;
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
 	var x_vel_increment:Float = 100.0;
 	var y_vel_increment:Float = 100.0;
 
-	public var size:Int = 50;
+	public var radius:Int = 24;
 	public var color:RlColor = Rl.Colors.DARKPURPLE;
 
 	public function new(x:Int, y:Int) {
-		this.x = x;
-		this.y = y;
+		position = Rl.Vector2.create(x, y);
 	}
 
 	public function update(elapsed_seconds:Float) {
-		x += Math.ceil(x_vel * elapsed_seconds);
-		y += Math.ceil(y_vel * elapsed_seconds);
+		position.x = position.x + (x_vel * elapsed_seconds);
+		position.y = position.y + (y_vel * elapsed_seconds);
 		// trace('$elapsed_seconds $x $y');
 	}
 
 	public function draw() {
-		Rl.drawCircle(x, y, size * 0.5, color);
+		var x = Std.int(position.x);
+		var y = Std.int(position.y);
+		Rl.drawCircle(x, y, radius, color);
 	}
 
 	public function move(x_direction:Int, y_direction:Int) {
@@ -171,6 +194,7 @@ class Player {
 	public function stop_y() {
 		y_vel = 0;
 	}
+
 }
 
 enum abstract Textures(Int) from Int to Int {
@@ -179,13 +203,13 @@ enum abstract Textures(Int) from Int to Int {
 
 @:structInit
 class Obstacle {
-	public var x:Int;
-	public var y:Int;
-	public var size:Int = 60;
+	public var box:Rectangle;
 
 	public function draw() {
-		var x_center_offset = Std.int(x - (size * 0.5));
-		var y_center_offset = Std.int(y - (size * 0.5));
-		Rl.drawRectangle(x_center_offset, y_center_offset, size, size, Rl.Colors.RED);
+		var x = Std.int(box.x);
+		var y = Std.int(box.y);
+		var width = Std.int(box.width);
+		var height = Std.int(box.height);
+		Rl.drawRectangle(x, y, width, height, Rl.Colors.RED);
 	}
 }
