@@ -75,10 +75,15 @@ class TestScene extends Scene {
 
 	public function update(elapsed_seconds:Float) {
 		controller.update();
+		
 		player.update(elapsed_seconds);
-		collide_player_with_bounds();
-		collide_player_with_obstacles();
 
+		// check collisions if player is moving
+		if (player.hasNonZeroVelocity()) {
+			collide_player_with_bounds();
+			collide_player_with_obstacles();
+		}
+		
 		var x_player = Std.int(player.position.x);
 		var y_player = Std.int(player.position.y);
 		game.update_cameraCenterInsideBounds(x_player, y_player, bounds.width, bounds.height);
@@ -105,12 +110,7 @@ class TestScene extends Scene {
 		var x_center_offset = Std.int(mouse_pos_in_world.x - (size * 0.5));
 		var y_center_offset = Std.int(mouse_pos_in_world.y - (size * 0.5));
 		obstacles.push({
-			box: Rl.Rectangle.create(
-				x_center_offset,
-				y_center_offset,
-				size,
-				size
-				)
+			box: Rl.Rectangle.create(x_center_offset, y_center_offset, size, size)
 		});
 	}
 
@@ -141,10 +141,41 @@ class TestScene extends Scene {
 
 	function collide_player_with_obstacles() {
 		for (obstacle in obstacles) {
-			if(Rl.checkCollisionCircleRec(player.position, player.radius, obstacle.box)){
+			if (Rl.checkCollisionCircleRec(player.position, player.radius, obstacle.box)) {
+				// collision happened so stop the player
 				player.stop();
+
+				// the player may be overlapping the obstacle when it stops because of th way movement is handled
+				// so need to separate the player from the collided obstacle
+
+				// find out how much player overlaps
+				var x_offset_player = player.position.x - player.radius;
+				var y_offset_player = player.position.y - player.radius;
+				var size_player = player.radius * 2;
+				var rec_player = Rl.Rectangle.create(x_offset_player, y_offset_player, size_player, size_player);
+				var overlap = Rl.getCollisionRec(rec_player, obstacle.box);
+				// trace('collision overlap x ${overlap.x} y ${overlap.y} w ${overlap.width} h ${overlap.height}');
+
+				// adjust player position by overlap amount
+				if(player.wasMovingRight()){
+					player.position.x = player.position.x - Std.int(overlap.width);
+				}
+				if(player.wasMovingLeft()){
+					player.position.x = player.position.x + Std.int(overlap.width);
+				}
+				if(player.wasMovingDown()){
+					player.position.y = player.position.y - Std.int(overlap.height);
+				}
+				if(player.wasMovingUp()){
+					player.position.y = player.position.y + Std.int(overlap.height);
+				}
+
 				// break because don't need to check the rest of the collisions as the player has now stopped.
 				break;
+
+				// todo ?! - handle circle overlap properly
+				// - currently the circle is treated as a rectangle which causes some glitches during separation
+				
 			}
 		}
 	}
@@ -152,6 +183,8 @@ class TestScene extends Scene {
 
 class Player {
 	public var position:Vector2;
+	public var position_previous:Vector2;
+
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
 	var x_vel_increment:Float = 100.0;
@@ -162,9 +195,12 @@ class Player {
 
 	public function new(x:Int, y:Int) {
 		position = Rl.Vector2.create(x, y);
+		position_previous = Rl.Vector2.create(x, y);
 	}
 
 	public function update(elapsed_seconds:Float) {
+		position_previous.x = position.x;
+		position_previous.y = position.y;
 		position.x = position.x + (x_vel * elapsed_seconds);
 		position.y = position.y + (y_vel * elapsed_seconds);
 		// trace('$elapsed_seconds $x $y');
@@ -195,6 +231,25 @@ class Player {
 		y_vel = 0;
 	}
 
+	public function hasNonZeroVelocity():Bool {
+		return x_vel != 0 || y_vel != 0;
+	}
+
+	public function wasMovingRight() {
+		return position_previous.x < position.x;
+	}
+	
+	public function wasMovingLeft() {
+		return position_previous.x > position.x;
+	}
+
+	public function wasMovingDown() {
+		return position_previous.y < position.y;
+	}
+
+	public function wasMovingUp() {
+		return position_previous.y > position.y;
+	}
 }
 
 enum abstract Textures(Int) from Int to Int {
