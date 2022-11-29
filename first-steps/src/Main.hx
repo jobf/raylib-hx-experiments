@@ -64,7 +64,9 @@ class TestScene extends Scene {
 			on_move_right: () -> player.move(1, 0),
 			on_move_left: () -> player.move(-1, 0),
 			on_move_up: () -> player.move(0, -1),
-			on_move_down: () -> player.move(0, 1)
+			on_move_down: () -> player.move(0, 1),
+			on_mouse_press_left: mouse_pos_screen -> trace_mouse_pos('LEFT', mouse_pos_screen),
+			on_mouse_press_right: mouse_pos_screen -> trace_mouse_pos('RIGHT', mouse_pos_screen),
 		});
 	}
 
@@ -100,6 +102,11 @@ class TestScene extends Scene {
 	public function draw() {
 		Rl.drawTexture(background, 0, 0, Rl.Colors.WHITE);
 		player.draw();
+	}
+
+	function trace_mouse_pos(button:String, mouse_pos_screen:Vector2) {
+		var mouse_pos_world = Rl.getScreenToWorld2D(mouse_pos_screen, game.camera);
+		trace('click $button \n window pos : ${mouse_pos_screen.x} ${mouse_pos_screen.y} \n world pos  : ${mouse_pos_world.x} ${mouse_pos_world.y}');
 	}
 }
 
