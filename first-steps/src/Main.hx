@@ -12,7 +12,7 @@ class Main {
 		}
 		Rl.initWindow(windowBounds.width, windowBounds.height, "ray");
 
-		// using VSYNC_HINT is better than setTargetFPS as it will use the GPU as a source for timing, which is more reliable
+		// using VSYNC_HINT might be better than setTargetFPS as it will use the GPU as a source for timing, which is more reliable
 		// more info here - https://bedroomcoders.co.uk/why-you-shouldnt-use-settargetfps-with-raylib/
 		// it should result in less CPU and less screen tearing
 		Rl.setWindowState(Rl.ConfigFlags.VSYNC_HINT);
@@ -65,7 +65,10 @@ class TestScene extends Scene {
 			on_move_left: () -> player.move(-1, 0),
 			on_move_up: () -> player.move(0, -1),
 			on_move_down: () -> player.move(0, 1),
-			on_mouse_press_left: mouse_pos_screen -> trace_mouse_pos('LEFT', mouse_pos_screen),
+			on_mouse_press_left: mouse_pos_screen -> {
+				trace_mouse_pos('LEFT', mouse_pos_screen);
+				place_obstacle(mouse_pos_screen);
+			},
 			on_mouse_press_right: mouse_pos_screen -> trace_mouse_pos('RIGHT', mouse_pos_screen),
 		});
 	}
@@ -102,11 +105,24 @@ class TestScene extends Scene {
 	public function draw() {
 		Rl.drawTexture(background, 0, 0, Rl.Colors.WHITE);
 		player.draw();
+		for (obstacle in obstacles) {
+			obstacle.draw();
+		}
 	}
 
 	function trace_mouse_pos(button:String, mouse_pos_screen:Vector2) {
 		var mouse_pos_world = Rl.getScreenToWorld2D(mouse_pos_screen, game.camera);
 		trace('click $button \n window pos : ${mouse_pos_screen.x} ${mouse_pos_screen.y} \n world pos  : ${mouse_pos_world.x} ${mouse_pos_world.y}');
+	}
+
+	var obstacles:Array<Obstacle> = [];
+
+	function place_obstacle(mouse_pos_screen:Vector2) {
+		var mouse_pos_in_world = Rl.getScreenToWorld2D(mouse_pos_screen, game.camera);
+		obstacles.push({
+			x: Std.int(mouse_pos_in_world.x),
+			y: Std.int(mouse_pos_in_world.y),
+		});
 	}
 }
 
@@ -159,4 +175,17 @@ class Player {
 
 enum abstract Textures(Int) from Int to Int {
 	var BACKGROUND;
+}
+
+@:structInit
+class Obstacle {
+	public var x:Int;
+	public var y:Int;
+	public var size:Int = 60;
+
+	public function draw() {
+		var x_center_offset = Std.int(x - (size * 0.5));
+		var y_center_offset = Std.int(y - (size * 0.5));
+		Rl.drawRectangle(x_center_offset, y_center_offset, size, size, Rl.Colors.RED);
+	}
 }
