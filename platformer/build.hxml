@@ -1,0 +1,5 @@
+-lib raylib-hx
+-cp src
+-main Main
+-cpp dist/cpp/
+--cmd ./dist/cpp/Main
