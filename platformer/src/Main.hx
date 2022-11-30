@@ -107,31 +107,51 @@ class PlatformerScene extends Scene {
 	function collide_player_with_platforms() {
 		for (platform in platforms) {
 			if (Rl.checkCollisionRecs(player.rectangle, platform.rectangle)) {
-				// collision happened so stop the player
-				player.stop();
+				
+				var is_collided_with_floor = platform == floor;
 
-				var collided = platform == floor ? "floor" : "platform";
-				trace('player collision with $collided');
+				// trace('player collision with ${is_collided_with_floor ? "floor" : "platform"}');
 
-				// the player may be overlapping the platform when it stops because of the way movement is handled
-				// so need to separate the player from the collided platform
-
-				// find out how much player overlaps
-				var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
-				// trace('collision overlap x ${overlap.x} y ${overlap.y} w ${overlap.width} h ${overlap.height}');
-
-				// adjust player position by overlap amount
-				if (player.wasMovingRight()) {
-					player.position.x = player.position.x - Std.int(overlap.width);
+				if (player.wasMovingRight() && !is_collided_with_floor) {
+					var is_collision_on_right = platform.rectangle.x > player.position.x;
+					if (is_collision_on_right) {
+						player.stop_x();
+						// find out how much player overlaps
+						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
+						// adjust player position by overlap amount
+						player.position.x = player.position.x - Std.int(overlap.width);
+					}
 				}
-				if (player.wasMovingLeft()) {
-					player.position.x = player.position.x + Std.int(overlap.width);
+				if (player.wasMovingLeft() && !is_collided_with_floor) {
+					var is_collision_on_left = platform.rectangle.x < player.position.x;
+					if (is_collision_on_left) {
+						player.stop_x();
+						// find out how much player overlaps
+						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
+						// adjust player position by overlap amount
+						player.position.x = player.position.x + Std.int(overlap.width);
+					}
 				}
 				if (player.wasMovingDown()) {
-					player.position.y = player.position.y - Std.int(overlap.height);
+					var is_collision_on_down = platform.rectangle.y > player.position.y;
+					if (is_collision_on_down) {
+						player.stop_y();
+						// find out how much player overlaps
+						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
+						// adjust player position by overlap amount
+						player.position.y = player.position.y - Std.int(overlap.height);
+						player.set_touching_ground(true);
+					}
 				}
 				if (player.wasMovingUp()) {
-					player.position.y = player.position.y + Std.int(overlap.height);
+					var is_collision_on_up = platform.rectangle.y < player.position.y;
+					if (is_collision_on_up) {
+						player.stop_y();
+						// find out how much player overlaps
+						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
+						// adjust player position by overlap amount
+						player.position.y = player.position.y + Std.int(overlap.height);
+					}
 				}
 
 				// break because don't need to check the rest of the collisions as the player has now stopped.
@@ -165,11 +185,12 @@ class Platform {
 class Player {
 	public var position(default, null):Vector2;
 	public var position_previous(default, null):Vector2;
+	public var is_touching_ground(default, null):Bool = false;
 
 	var x_vel:Float = 0.0;
-	var y_vel:Float = 50.0;
-	var x_vel_increment:Float = 100.0;
-	var y_vel_increment:Float = 100.0;
+	var y_vel:Float = 0.0;
+	var speed_fall:Float = 50.0;
+	var speed_horizontal:Float = 50.0;
 
 	public var rectangle:Rl.Rectangle;
 	public var color:RlColor = Rl.Colors.ORANGE;
@@ -185,11 +206,17 @@ class Player {
 	public function update(elapsed_seconds:Float) {
 		position_previous.x = position.x;
 		position_previous.y = position.y;
+
+		if (is_touching_ground) {
+			y_vel = 0;
+		} else {
+			y_vel = speed_fall;
+		}
+
 		position.x = position.x + (x_vel * elapsed_seconds);
 		position.y = position.y + (y_vel * elapsed_seconds);
 		rectangle.x = position.x;
 		rectangle.y = position.y;
-		// trace('$elapsed_seconds $x $y');
 	}
 
 	public function draw() {
@@ -201,22 +228,25 @@ class Player {
 	}
 
 	public function move(x_direction:Int, y_direction:Int) {
-		x_vel += x_direction * x_vel_increment;
-		y_vel += y_direction * y_vel_increment;
+		x_vel += x_direction * speed_horizontal;
+		// y_vel += y_direction * y_vel_increment;
 		trace('new velocities $x_vel $y_vel');
 	}
 
 	public function stop() {
 		y_vel = 0;
 		x_vel = 0;
+		trace('player stop x y');
 	}
 
 	public function stop_x() {
 		x_vel = 0;
+		trace('player stop x');
 	}
-
+	
 	public function stop_y() {
 		y_vel = 0;
+		trace('player stop y');
 	}
 
 	public function hasNonZeroVelocity():Bool {
@@ -247,5 +277,10 @@ class Player {
 	public function set_y(y:Float) {
 		position.y = y;
 		rectangle.y = y;
+	}
+
+	public function set_touching_ground(isTouching:Bool) {
+		is_touching_ground = isTouching;
+		trace('player is grounded ? $is_touching_ground');
 	}
 }
