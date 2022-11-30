@@ -58,8 +58,8 @@ class PlatformerScene extends Scene {
 
 		controller = new Controller({
 			// on_move_up: on_move_up,
-			on_move_right: () -> player.move(1, 0),
-			on_move_left: () -> player.move(-1, 0),
+			on_move_right: () -> player.move(1),
+			on_move_left: () -> player.move(-1),
 			// on_move_down: on_move_down,
 			// on_mouse_press_right: on_mouse_press_right,
 			// on_mouse_press_left: on_mouse_press_left
@@ -192,7 +192,7 @@ class Player {
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
 	var speed_fall:Float = 250.0;
-	var speed_horizontal:Float = 50.0;
+	var speed_increment_horizontal:Float = 50.0;
 
 	public var rectangle:Rl.Rectangle;
 	public var color:RlColor = Rl.Colors.ORANGE;
@@ -229,10 +229,19 @@ class Player {
 		Rl.drawRectangle(x, y, width, height, color);
 	}
 
-	public function move(x_direction:Int, y_direction:Int) {
-		x_vel += x_direction * speed_horizontal;
-		// y_vel += y_direction * y_vel_increment;
-		trace('new velocities $x_vel $y_vel');
+	public function move(x_direction:Int) {
+		var will_move_left = x_direction < 0;
+		var will_move_right = x_direction > 0;
+		var is_changing_direction = (wasMovingLeft() && will_move_right) || (wasMovingRight() && will_move_left);
+		if(is_changing_direction){
+			// set new velocity in direction
+			x_vel = x_direction * speed_increment_horizontal;
+		}
+		else{
+			// increase velocity in direction
+			x_vel += x_direction * speed_increment_horizontal;
+		}
+		trace('new x velocity $x_vel');
 	}
 
 	public function stop() {
