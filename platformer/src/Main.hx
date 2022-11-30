@@ -87,7 +87,7 @@ class PlatformerScene extends Scene {
 			// reset player position to within the bounds
 			player.set_x(0);
 		}
-		if (player.position.x > bounds.width) {
+		if (player.position.x > bounds.width - player.rectangle.width) {
 			player.stop_x();
 			// reset player position to within the bounds
 			player.set_x(bounds.width - player.rectangle.width);
