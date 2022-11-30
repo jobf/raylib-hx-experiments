@@ -12,7 +12,7 @@ class Main {
 
 		Rl.initWindow(windowBounds.width, windowBounds.height, "platfoms");
 		// Rl.setTargetFPS(60);
-		// as far as I can see, VSYNC_HINT is a bit smoother 
+		// as far as I can see, VSYNC_HINT is a bit smoother
 		Rl.setWindowState(Rl.ConfigFlags.VSYNC_HINT);
 
 		var sceneBounds:RectangleGeometry = {
@@ -57,7 +57,7 @@ class PlatformerScene extends Scene {
 		player = new Player(center_scene, 0);
 
 		controller = new Controller({
-			// on_move_up: on_move_up,
+			on_move_up: () -> player.jump(),
 			on_move_right: () -> player.move(1),
 			on_move_left: () -> player.move(-1),
 			// on_move_down: on_move_down,
@@ -109,7 +109,6 @@ class PlatformerScene extends Scene {
 	function collide_player_with_platforms() {
 		for (platform in platforms) {
 			if (Rl.checkCollisionRecs(player.rectangle, platform.rectangle)) {
-				
 				var is_collided_with_floor = platform == floor;
 
 				// trace('player collision with ${is_collided_with_floor ? "floor" : "platform"}');
@@ -189,9 +188,13 @@ class Player {
 	public var position_previous(default, null):Vector2;
 	public var is_touching_ground(default, null):Bool = false;
 
+	var is_jumping:Bool = false;
+	var air_time:Float = 0.0;
+
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
 	var speed_fall:Float = 250.0;
+	var speed_jump:Float = 350.0;
 	var speed_increment_horizontal:Float = 50.0;
 
 	public var rectangle:Rl.Rectangle;
@@ -212,7 +215,12 @@ class Player {
 		if (is_touching_ground) {
 			y_vel = 0;
 		} else {
-			y_vel = speed_fall;
+			if (is_jumping && air_time > 0) {
+				air_time -= elapsed_seconds;
+			}
+			else{
+				y_vel = speed_fall;
+			}
 		}
 
 		position.x = position.x + (x_vel * elapsed_seconds);
@@ -233,11 +241,10 @@ class Player {
 		var will_move_left = x_direction < 0;
 		var will_move_right = x_direction > 0;
 		var is_changing_direction = (wasMovingLeft() && will_move_right) || (wasMovingRight() && will_move_left);
-		if(is_changing_direction){
+		if (is_changing_direction) {
 			// set new velocity in direction
 			x_vel = x_direction * speed_increment_horizontal;
-		}
-		else{
+		} else {
 			// increase velocity in direction
 			x_vel += x_direction * speed_increment_horizontal;
 		}
@@ -254,7 +261,7 @@ class Player {
 		x_vel = 0;
 		trace('player stop x');
 	}
-	
+
 	public function stop_y() {
 		y_vel = 0;
 		trace('player stop y');
@@ -293,5 +300,14 @@ class Player {
 	public function set_touching_ground(isTouching:Bool) {
 		is_touching_ground = isTouching;
 		trace('player is grounded ? $is_touching_ground');
+	}
+
+	public function jump() {
+		if (is_touching_ground) {
+			y_vel = -speed_jump;
+			is_jumping = true;
+			air_time = 0.3;
+			set_touching_ground(false);
+		}
 	}
 }
