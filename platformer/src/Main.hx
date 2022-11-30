@@ -11,7 +11,9 @@ class Main {
 		}
 
 		Rl.initWindow(windowBounds.width, windowBounds.height, "platfoms");
-		Rl.setTargetFPS(60);
+		// Rl.setTargetFPS(60);
+		// as far as I can see, VSYNC_HINT is a bit smoother 
+		Rl.setWindowState(Rl.ConfigFlags.VSYNC_HINT);
 
 		var sceneBounds:RectangleGeometry = {
 			width: windowBounds.width,
@@ -189,7 +191,7 @@ class Player {
 
 	var x_vel:Float = 0.0;
 	var y_vel:Float = 0.0;
-	var speed_fall:Float = 50.0;
+	var speed_fall:Float = 250.0;
 	var speed_horizontal:Float = 50.0;
 
 	public var rectangle:Rl.Rectangle;
