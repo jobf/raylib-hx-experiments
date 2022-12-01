@@ -1,5 +1,4 @@
 Code in here is me attempting to get my head around raylib and the haxe bindings raylib-hx - https://github.com/foreignsasquatch/raylib-hx
-ks` branch of my fork.
 
 To install the lib do this -
 
