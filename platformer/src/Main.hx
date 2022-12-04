@@ -60,10 +60,12 @@ class PlatformerScene extends Scene {
 		player = new Player(center_scene, 0);
 
 		controller = new Controller({
-			on_move_up: () -> player.jump(),
-			on_move_right: () -> player.move(1),
-			on_move_left: () -> player.move(-1),
-			// on_move_down: on_move_down,
+			on_pressed_up: () -> player.jump(),
+			on_pressed_right: () -> player.accelerate_x(1),
+			on_pressed_left: () -> player.accelerate_x(-1),
+			on_released_right: () -> player.apply_brakes_x(),
+			on_released_left: () -> player.apply_brakes_x(),
+			// on_pressed_down: on_pressed_down,
 			// on_mouse_press_right: on_mouse_press_right,
 			// on_mouse_press_left: on_mouse_press_left
 		});
@@ -236,9 +238,13 @@ class Player {
 		Rl.drawRectangle(x, y, width, height, color);
 	}
 
-	public function move(x_direction:Int) {
+	public function accelerate_x(x_direction:Int) {
 		motion.acceleration_increase.x = x_direction * speed_x;
 		trace('new x acceleration ${motion.acceleration_increase.x}');
+	}
+
+	public function apply_brakes_x(){
+		motion.acceleration_increase.x = 0;
 	}
 
 	public function stop() {

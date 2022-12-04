@@ -18,8 +18,8 @@ haxe build.hxml
 
 Currently the project consists of
 
- - a player object with simple velocity based movement (zero friction)
- - cursor keys 🠔 🠖 steers the player
+ - a player object with velocity based movement (including acceleration for more natural motion)
+ - cursor keys 🠔 🠖 moves the player
  - cursor key 🠕 makes player jump
  - simple scene with a floor
  - simple camera which centers on the player, and keeps within scene boundaries
