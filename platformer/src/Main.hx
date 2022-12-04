@@ -1,5 +1,8 @@
+import Physics.MotionComponent;
 import Rl;
 import Core;
+
+using Physics.MotionComponentLogic;
 
 class Main {
 	static var game:Game;
@@ -77,29 +80,29 @@ class PlatformerScene extends Scene {
 			collide_player_with_platforms();
 		}
 
-		var x_player = Std.int(player.position.x);
-		var y_player = Std.int(player.position.y);
+		var x_player = Std.int(player.rectangle.x);
+		var y_player = Std.int(player.rectangle.y);
 		game.update_cameraCenterInsideBounds(x_player, y_player, bounds.width, bounds.height);
 	}
 
 	function collide_player_with_bounds() {
 		// check if player is outside bounds
-		if (0 > player.position.x) {
+		if (0 > player.rectangle.x) {
 			player.stop_x();
 			// reset player position to within the bounds
 			player.set_x(0);
 		}
-		if (player.position.x > bounds.width - player.rectangle.width) {
+		if (player.rectangle.x > bounds.width - player.rectangle.width) {
 			player.stop_x();
 			// reset player position to within the bounds
 			player.set_x(bounds.width - player.rectangle.width);
 		}
-		if (0 > player.position.y) {
+		if (0 > player.rectangle.y) {
 			player.stop_y();
 			// reset player position to within the bounds
 			player.set_y(0);
 		}
-		if (player.position.y > bounds.height) {
+		if (player.rectangle.y > bounds.height) {
 			player.stop_y();
 			// reset player position to within the bounds
 			player.set_y(bounds.height - player.rectangle.height);
@@ -114,44 +117,44 @@ class PlatformerScene extends Scene {
 				// trace('player collision with ${is_collided_with_floor ? "floor" : "platform"}');
 
 				if (player.wasMovingRight() && !is_collided_with_floor) {
-					var is_collision_on_right = platform.rectangle.x > player.position.x;
+					var is_collision_on_right = platform.rectangle.x > player.rectangle.x;
 					if (is_collision_on_right) {
 						player.stop_x();
 						// find out how much player overlaps
 						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
 						// adjust player position by overlap amount
-						player.position.x = player.position.x - Std.int(overlap.width);
+						player.rectangle.x = player.rectangle.x - Std.int(overlap.width);
 					}
 				}
 				if (player.wasMovingLeft() && !is_collided_with_floor) {
-					var is_collision_on_left = platform.rectangle.x < player.position.x;
+					var is_collision_on_left = platform.rectangle.x < player.rectangle.x;
 					if (is_collision_on_left) {
 						player.stop_x();
 						// find out how much player overlaps
 						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
 						// adjust player position by overlap amount
-						player.position.x = player.position.x + Std.int(overlap.width);
+						player.rectangle.x = player.rectangle.x + Std.int(overlap.width);
 					}
 				}
 				if (player.wasMovingDown()) {
-					var is_collision_on_down = platform.rectangle.y > player.position.y;
+					var is_collision_on_down = platform.rectangle.y > player.rectangle.y;
 					if (is_collision_on_down) {
 						player.stop_y();
 						// find out how much player overlaps
 						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
 						// adjust player position by overlap amount
-						player.position.y = player.position.y - Std.int(overlap.height);
+						player.rectangle.y = player.rectangle.y - Std.int(overlap.height);
 						player.set_touching_ground(true);
 					}
 				}
 				if (player.wasMovingUp()) {
-					var is_collision_on_up = platform.rectangle.y < player.position.y;
+					var is_collision_on_up = platform.rectangle.y < player.rectangle.y;
 					if (is_collision_on_up) {
 						player.stop_y();
 						// find out how much player overlaps
 						var overlap = Rl.getCollisionRec(player.rectangle, platform.rectangle);
 						// adjust player position by overlap amount
-						player.position.y = player.position.y + Std.int(overlap.height);
+						player.rectangle.y = player.rectangle.y + Std.int(overlap.height);
 					}
 				}
 
@@ -184,49 +187,45 @@ class Platform {
 }
 
 class Player {
-	public var position(default, null):Vector2;
-	public var position_previous(default, null):Vector2;
+	var motion:MotionComponent;
+	public var rectangle:Rl.Rectangle;
+
 	public var is_touching_ground(default, null):Bool = false;
 
 	var is_jumping:Bool = false;
 	var air_time:Float = 0.0;
 
-	var x_vel:Float = 0.0;
-	var y_vel:Float = 0.0;
-	var speed_fall:Float = 250.0;
+	// var speed_fall:Float = 250.0;
 	var speed_jump:Float = 350.0;
-	var speed_increment_horizontal:Float = 50.0;
+	var speed_x:Float = 80.0;
 
-	public var rectangle:Rl.Rectangle;
 	public var color:RlColor = Rl.Colors.ORANGE;
 
 	public function new(x:Int, y:Int) {
-		position = Rl.Vector2.create(x, y);
-		position_previous = Rl.Vector2.create(x, y);
+		motion = new MotionComponent(x, y);
+		motion.acceleration_increase.y = 200;
+		motion.acceleration_decrease.x = 100;
+		motion.velocity_maximum.x = 100;
 		var width = 22;
 		var height = 48;
-		rectangle = Rl.Rectangle.create(position.x, position.y, width, height);
+		rectangle = Rl.Rectangle.create(motion.position_now.x, motion.position_now.y, width, height);
 	}
 
 	public function update(elapsed_seconds:Float) {
-		position_previous.x = position.x;
-		position_previous.y = position.y;
-
 		if (is_touching_ground) {
-			y_vel = 0;
+			motion.acceleration_increase.y = 0;
 		} else {
 			if (is_jumping && air_time > 0) {
 				air_time -= elapsed_seconds;
 			}
 			else{
-				y_vel = speed_fall;
+				motion.acceleration_increase.y = 200;
 			}
 		}
 
-		position.x = position.x + (x_vel * elapsed_seconds);
-		position.y = position.y + (y_vel * elapsed_seconds);
-		rectangle.x = position.x;
-		rectangle.y = position.y;
+		motion.compute_motion(elapsed_seconds);
+		rectangle.x = motion.position_now.x;
+		rectangle.y = motion.position_now.y;
 	}
 
 	public function draw() {
@@ -238,62 +237,57 @@ class Player {
 	}
 
 	public function move(x_direction:Int) {
-		var will_move_left = x_direction < 0;
-		var will_move_right = x_direction > 0;
-		var is_changing_direction = (wasMovingLeft() && will_move_right) || (wasMovingRight() && will_move_left);
-		if (is_changing_direction) {
-			// set new velocity in direction
-			x_vel = x_direction * speed_increment_horizontal;
-		} else {
-			// increase velocity in direction
-			x_vel += x_direction * speed_increment_horizontal;
-		}
-		trace('new x velocity $x_vel');
+		motion.acceleration_increase.x = x_direction * speed_x;
+		trace('new x acceleration ${motion.acceleration_increase.x}');
 	}
 
 	public function stop() {
-		y_vel = 0;
-		x_vel = 0;
+		motion.acceleration_increase.x = 0;
+		motion.acceleration_increase.y = 0;
+		motion.velocity_now.x = 0;
+		motion.velocity_now.y = 0;
 		trace('player stop x y');
 	}
-
+	
 	public function stop_x() {
-		x_vel = 0;
+		motion.acceleration_increase.x = 0;
+		motion.velocity_now.x = 0;
 		trace('player stop x');
 	}
-
+	
 	public function stop_y() {
-		y_vel = 0;
+		motion.acceleration_increase.y = 0;
+		motion.velocity_now.y = 0;
 		trace('player stop y');
 	}
 
 	public function hasNonZeroVelocity():Bool {
-		return x_vel != 0 || y_vel != 0;
+		return motion.velocity_now.x != 0 || motion.velocity_now.y != 0;
 	}
 
 	public function wasMovingRight() {
-		return position_previous.x < position.x;
+		return motion.position_previous.x < motion.position_now.x;
 	}
 
 	public function wasMovingLeft() {
-		return position_previous.x > position.x;
+		return motion.position_previous.x > motion.position_now.x;
 	}
 
 	public function wasMovingDown() {
-		return position_previous.y < position.y;
+		return motion.position_previous.y < motion.position_now.y;
 	}
 
 	public function wasMovingUp() {
-		return position_previous.y > position.y;
+		return motion.position_previous.y > motion.position_now.y;
 	}
 
 	public function set_x(x:Float) {
-		position.x = x;
+		motion.position_now.x = x;
 		rectangle.x = x;
 	}
 
 	public function set_y(y:Float) {
-		position.y = y;
+		motion.position_now.y = y;
 		rectangle.y = y;
 	}
 
@@ -304,7 +298,7 @@ class Player {
 
 	public function jump() {
 		if (is_touching_ground) {
-			y_vel = -speed_jump;
+			motion.acceleration_increase.y = -speed_jump;
 			is_jumping = true;
 			air_time = 0.3;
 			set_touching_ground(false);
