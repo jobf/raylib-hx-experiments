@@ -189,25 +189,41 @@ class Platform {
 }
 
 class Player {
-	var motion:MotionComponent;
 	public var rectangle:Rl.Rectangle;
-
-	public var is_touching_ground(default, null):Bool = false;
-
-	var is_jumping:Bool = false;
-	var air_time:Float = 0.0;
-
-	// var speed_fall:Float = 250.0;
-	var speed_jump:Float = 350.0;
-	var speed_x:Float = 80.0;
-
 	public var color:RlColor = Rl.Colors.ORANGE;
+
+	var motion:MotionComponent;
+	
+	/** the maximum speed on x axis **/
+	var x_velocity_max:Float = 250;
+
+	/** the maximum speed on y axis **/
+	var y_velocity_max:Float = 400;
+
+	/** how fast to accelerate left or right **/
+	var x_acceleration:Float = 500;
+
+	/** how fast to slow down when not accelerating left or right **/
+	var x_deceleration:Float = 900;
+
+	/** how fast to accelerate towards the ground **/
+	var y_acceleration:Float = 500;
+	
+	public var is_touching_ground(default, null):Bool = false;
+	var jump_is_in_progress:Bool = false;
+
+	/** how long before jump timer should reset **/
+	var jump_duration_seconds:Float = 0.34;
+	var jump_timer_seconds:Float = 0.0;
+
+	/** how much acceleration to apply on y axis when jumping aka jump power **/
+	var jump_acceleration:Float = 900.0;
 
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
-		motion.acceleration_increase.y = 200;
-		motion.acceleration_decrease.x = 100;
-		motion.velocity_maximum.x = 100;
+		motion.acceleration_increase.y = y_acceleration;
+		motion.acceleration_decrease.x = x_deceleration;
+		motion.velocity_maximum.x = x_velocity_max;
 		var width = 22;
 		var height = 48;
 		rectangle = Rl.Rectangle.create(motion.position_now.x, motion.position_now.y, width, height);
@@ -217,11 +233,11 @@ class Player {
 		if (is_touching_ground) {
 			motion.acceleration_increase.y = 0;
 		} else {
-			if (is_jumping && air_time > 0) {
-				air_time -= elapsed_seconds;
+			if (jump_is_in_progress && jump_timer_seconds > 0) {
+				jump_timer_seconds -= elapsed_seconds;
 			}
 			else{
-				motion.acceleration_increase.y = 200;
+				motion.acceleration_increase.y = y_acceleration;
 			}
 		}
 
@@ -239,7 +255,7 @@ class Player {
 	}
 
 	public function accelerate_x(x_direction:Int) {
-		motion.acceleration_increase.x = x_direction * speed_x;
+		motion.acceleration_increase.x = x_direction * x_acceleration;
 		trace('new x acceleration ${motion.acceleration_increase.x}');
 	}
 
@@ -304,9 +320,9 @@ class Player {
 
 	public function jump() {
 		if (is_touching_ground) {
-			motion.acceleration_increase.y = -speed_jump;
-			is_jumping = true;
-			air_time = 0.3;
+			motion.acceleration_increase.y = -jump_acceleration;
+			jump_is_in_progress = true;
+			jump_timer_seconds = jump_duration_seconds;
 			set_touching_ground(false);
 		}
 	}
