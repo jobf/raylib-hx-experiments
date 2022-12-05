@@ -58,6 +58,8 @@ class PlatformerScene extends Scene {
 
 		var center_scene = Std.int(bounds.width * 0.5);
 		player = new Player(center_scene, 0);
+		player.editor_bind(game.editor);
+		// Raygui.GuiLoadStyle() todo - update raylib gui?
 
 		controller = new Controller({
 			on_pressed_up: () -> player.jump(),
@@ -69,6 +71,7 @@ class PlatformerScene extends Scene {
 			// on_mouse_press_right: on_mouse_press_right,
 			// on_mouse_press_left: on_mouse_press_left
 		});
+
 	}
 
 	public function update(elapsed_seconds:Float) {
@@ -167,11 +170,14 @@ class PlatformerScene extends Scene {
 	}
 
 	public function draw() {
+
 		for (platform in platforms) {
 			platform.draw();
 		}
 		player.draw();
 	}
+
+	var editor:Editor;
 }
 
 @:structInit
@@ -198,26 +204,27 @@ class Player {
 	var x_velocity_max:Float = 250;
 
 	/** the maximum speed on y axis **/
-	var y_velocity_max:Float = 400;
+	var y_velocity_max:Float = 10000;
 
 	/** how fast to accelerate left or right **/
 	var x_acceleration:Float = 500;
 
 	/** how fast to slow down when not accelerating left or right **/
-	var x_deceleration:Float = 900;
+	var x_deceleration:Float = 1900;
+	// var x_deceleration:Float = 900; when turning?
 
 	/** how fast to accelerate towards the ground **/
-	var y_acceleration:Float = 500;
+	var y_acceleration:Float = 1500;
 	
 	public var is_touching_ground(default, null):Bool = false;
 	var jump_is_in_progress:Bool = false;
 
 	/** how long before jump timer should reset **/
-	var jump_duration_seconds:Float = 0.34;
+	var jump_duration_seconds:Float = 0.35;
 	var jump_timer_seconds:Float = 0.0;
 
 	/** how much acceleration to apply on y axis when jumping aka jump power **/
-	var jump_acceleration:Float = 900.0;
+	var jump_acceleration:Float = 1200.0;
 
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
@@ -325,5 +332,48 @@ class Player {
 			jump_timer_seconds = jump_duration_seconds;
 			set_touching_ground(false);
 		}
+	}
+
+	public function editor_bind(editor:Editor) {
+		editor.add_slider(
+			"x_acceleration",
+			x_acceleration,
+			0,
+			5000,
+			value -> x_acceleration = value
+		);
+
+		// todo , set up changing these
+		// editor.add_slider(
+		// 	"x_velocity_max",
+		// 	x_velocity_max,
+		// 	10,
+		// 	5000,
+		// 	value -> x_velocity_max = value
+		// );
+
+		// editor.add_slider(
+		// 	"x_deceleration",
+		// 	x_deceleration,
+		// 	10,
+		// 	3000,
+		// 	value -> x_deceleration = value
+		// );
+
+		editor.add_slider(
+			"jump_acceleration",
+			jump_acceleration,
+			0,
+			5000,
+			value -> jump_acceleration = value
+		);
+
+		editor.add_slider(
+			"jump_duration",
+			jump_duration_seconds,
+			0.1,
+			2,
+			value -> jump_duration_seconds = value
+		);
 	}
 }
