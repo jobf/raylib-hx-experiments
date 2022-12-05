@@ -74,7 +74,7 @@ class Slider {
 			? to_string()	
 			: "";
 
-		value = Raygui.GuiSlider(
+		value = Raygui.guiSlider(
 			bounds,
 			label_left,
 			label_right,
