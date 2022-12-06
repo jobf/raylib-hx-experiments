@@ -228,29 +228,29 @@ class Player {
 
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
-		motion.acceleration_increase.y = y_acceleration;
-		motion.acceleration_decrease.x = x_deceleration;
+		motion.acceleration.y = y_acceleration;
+		motion.deceleration.x = x_deceleration;
 		motion.velocity_maximum.x = x_velocity_max;
 		var width = 22;
 		var height = 48;
-		rectangle = Rl.Rectangle.create(motion.position_now.x, motion.position_now.y, width, height);
+		rectangle = Rl.Rectangle.create(motion.position.x, motion.position.y, width, height);
 	}
 
 	public function update(elapsed_seconds:Float) {
 		if (is_touching_ground) {
-			motion.acceleration_increase.y = 0;
+			motion.acceleration.y = 0;
 		} else {
 			if (jump_is_in_progress && jump_timer_seconds > 0) {
 				jump_timer_seconds -= elapsed_seconds;
 			}
 			else{
-				motion.acceleration_increase.y = y_acceleration;
+				motion.acceleration.y = y_acceleration;
 			}
 		}
 
 		motion.compute_motion(elapsed_seconds);
-		rectangle.x = motion.position_now.x;
-		rectangle.y = motion.position_now.y;
+		rectangle.x = motion.position.x;
+		rectangle.y = motion.position.y;
 	}
 
 	public function draw() {
@@ -262,61 +262,61 @@ class Player {
 	}
 
 	public function accelerate_x(x_direction:Int) {
-		motion.acceleration_increase.x = x_direction * x_acceleration;
-		trace('new x acceleration ${motion.acceleration_increase.x}');
+		motion.acceleration.x = x_direction * x_acceleration;
+		trace('new x acceleration ${motion.acceleration.x}');
 	}
 
 	public function apply_brakes_x(){
-		motion.acceleration_increase.x = 0;
+		motion.acceleration.x = 0;
 	}
 
 	public function stop() {
-		motion.acceleration_increase.x = 0;
-		motion.acceleration_increase.y = 0;
-		motion.velocity_now.x = 0;
-		motion.velocity_now.y = 0;
+		motion.acceleration.x = 0;
+		motion.acceleration.y = 0;
+		motion.velocity.x = 0;
+		motion.velocity.y = 0;
 		trace('player stop x y');
 	}
 	
 	public function stop_x() {
-		motion.acceleration_increase.x = 0;
-		motion.velocity_now.x = 0;
+		motion.acceleration.x = 0;
+		motion.velocity.x = 0;
 		trace('player stop x');
 	}
 	
 	public function stop_y() {
-		motion.acceleration_increase.y = 0;
-		motion.velocity_now.y = 0;
+		motion.acceleration.y = 0;
+		motion.velocity.y = 0;
 		trace('player stop y');
 	}
 
 	public function hasNonZeroVelocity():Bool {
-		return motion.velocity_now.x != 0 || motion.velocity_now.y != 0;
+		return motion.velocity.x != 0 || motion.velocity.y != 0;
 	}
 
 	public function wasMovingRight() {
-		return motion.position_previous.x < motion.position_now.x;
+		return motion.position_previous.x < motion.position.x;
 	}
 
 	public function wasMovingLeft() {
-		return motion.position_previous.x > motion.position_now.x;
+		return motion.position_previous.x > motion.position.x;
 	}
 
 	public function wasMovingDown() {
-		return motion.position_previous.y < motion.position_now.y;
+		return motion.position_previous.y < motion.position.y;
 	}
 
 	public function wasMovingUp() {
-		return motion.position_previous.y > motion.position_now.y;
+		return motion.position_previous.y > motion.position.y;
 	}
 
 	public function set_x(x:Float) {
-		motion.position_now.x = x;
+		motion.position.x = x;
 		rectangle.x = x;
 	}
 
 	public function set_y(y:Float) {
-		motion.position_now.y = y;
+		motion.position.y = y;
 		rectangle.y = y;
 	}
 
@@ -327,7 +327,7 @@ class Player {
 
 	public function jump() {
 		if (is_touching_ground) {
-			motion.acceleration_increase.y = -jump_acceleration;
+			motion.acceleration.y = -jump_acceleration;
 			jump_is_in_progress = true;
 			jump_timer_seconds = jump_duration_seconds;
 			set_touching_ground(false);
@@ -360,13 +360,13 @@ class Player {
 		// 	value -> x_deceleration = value
 		// );
 
-		editor.add_slider(
-			"jump_acceleration",
-			jump_acceleration,
-			0,
-			5000,
-			value -> jump_acceleration = value
-		);
+editor.add_slider(
+	"jump_acceleration",
+	jump_acceleration,
+	0,
+	5000,
+	value -> jump_acceleration = value
+);
 
 		editor.add_slider(
 			"jump_duration",
