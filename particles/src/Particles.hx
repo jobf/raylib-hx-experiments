@@ -5,19 +5,41 @@ using Physics.MotionComponentLogic;
 import Rl.Color;
 
 class Emitter {
-	var particles:Array<Particle>;
+	/** starting x position of particles **/
 	var x:Int;
+	
+	/** starting y position of particles **/
 	var y:Int;
+
+	/** pool of particles for recycling **/
+	var particles:Array<Particle>;
+
+	/** size of particle pool **/
 	var maximum_particles:Int = 300;
+	
+	/** amount of time between particle emissions emission **/
+	public var seconds_between_particles:Float = 0;
 	var seconds_until_next_particle:Float = 0;
 
-	public var seconds_between_particles:Float = 0;
+	/** lowest x speed used when determining random x acceleration **/
 	public var x_speed_minimum:Float = 0;
+
+	/** highest x speed used when determining random y acceleration **/
 	public var x_speed_maximum:Float = 400;
+
+	/** lowest y speed used when determining random y acceleration **/
 	public var y_speed_minimum:Float = 200;
+
+	/** highest y speed used when determining random y acceleration **/
 	public var y_speed_maximum:Float = 1000;
+
+	/** width and height of particles **/
 	public var particle_size:Float = 15;
-	public var particle_acceleration_seconds:Float = 0.75;
+
+	/** how many seconds the particle will ascend before descending again **/
+	public var particle_ascend_seconds:Float = 0.75;
+
+	/** how many seconds the particle will be active before it can be recycled **/
 	public var particle_life_seconds:Float = 5;
 
 	public function new(x:Int, y:Int) {
@@ -51,7 +73,7 @@ class Emitter {
 	function make_particle() {
 		var color = Rl.Colors.LIGHTGRAY;
 		color.a = 80;
-		var particle = new Particle(x, y, Std.int(particle_size), color, particle_life_seconds, particle_acceleration_seconds);
+		var particle = new Particle(x, y, Std.int(particle_size), color, particle_life_seconds, particle_ascend_seconds);
 		set_random_trajectory(particle);
 		particles.push(particle);
 	}
@@ -111,8 +133,12 @@ class Particle {
 
 	public function update(elapsed_seconds:Float) {
 		if (!is_expired) {
+			// only run this logic if the particle is not expired
+
+			// calculate new position
 			motion.compute_motion(elapsed_seconds);
-			// after some time, stop accelerating away from the ground
+
+			// enough time has passed, stop accelerating away from the ground
 			acceleration_seconds_remaining -= elapsed_seconds;
 			if (is_ascending && acceleration_seconds_remaining <= 0) {
 				// set acceleration towards the floor
@@ -121,7 +147,7 @@ class Particle {
 				is_ascending = false;
 			}
 
-			// after some time, expire the particle so it can be recycled
+			// enough enough time has passed, expire the particle so it can be recycled
 			lifetime_seconds_remaining -= elapsed_seconds;
 			if (lifetime_seconds_remaining <= 0) {
 				// change expired state so update logic is no longer run
