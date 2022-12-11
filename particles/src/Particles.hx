@@ -23,10 +23,9 @@ class Emitter {
 	public function update(elapsed_seconds:Float) {
 		for (p in particles) {
 			p.update(elapsed_seconds);
-			
 		}
 		if (seconds_until_next_particle <= 0) {
-			if(particles.length < maximum_particles){
+			if (particles.length < maximum_particles) {
 				make_particle();
 			}
 			seconds_until_next_particle = seconds_between_particles;
@@ -41,10 +40,11 @@ class Emitter {
 		}
 	}
 
-	function make_particle(){
+	function make_particle() {
 		// trace('new $x $y');
 		final size = 5;
-		var particle = new Particle(x, y, size, Rl.Colors.LIGHTGRAY);
+		final lifetime_seconds:Float = 2;
+		var particle = new Particle(x, y, size, Rl.Colors.LIGHTGRAY, lifetime_seconds);
 
 		var x_min = 5;
 		var x_max = 200;
@@ -61,27 +61,38 @@ class Particle {
 	var size:Int;
 	var color:Color;
 	var motion:MotionComponent;
+	var lifetime_seconds:Float;
+	var lifetime_seconds_remaining:Float;
+	var is_expired:Bool;
 
-	public function new(x:Int, y:Int, size:Int, color:Color) {
+	public function new(x:Int, y:Int, size:Int, color:Color, lifetime_seconds:Float) {
 		this.color = color;
 		this.size = size;
+		this.lifetime_seconds = lifetime_seconds;
+		this.lifetime_seconds_remaining = lifetime_seconds;
+		is_expired = false;
 		this.motion = new MotionComponent(x, y);
 	}
 
 	public function update(elapsed_seconds:Float) {
-		motion.compute_motion(elapsed_seconds);
+		if (!this.is_expired) {
+			motion.compute_motion(elapsed_seconds);
+			lifetime_seconds_remaining -= elapsed_seconds;
+			if (lifetime_seconds_remaining <= 0) {
+				this.is_expired = true;
+			}
+		}
 	}
 
 	public function draw() {
-		Rl.drawRectangle(
-			Std.int(motion.position.x), 
-			Std.int(motion.position.y), 
-			Std.int(size), // width
-			Std.int(size), // height
-			color);
+		if (!is_expired) {
+			Rl.drawRectangle(Std.int(motion.position.x), Std.int(motion.position.y), Std.int(size), // width
+				Std.int(size), // height
+				color);
+		}
 	}
 
-	public function set_trajectory(x_acceleration:Float, y_acceleration:Float){
+	public function set_trajectory(x_acceleration:Float, y_acceleration:Float) {
 		motion.acceleration.x = x_acceleration;
 		motion.acceleration.y = y_acceleration;
 	}
