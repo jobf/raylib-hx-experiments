@@ -38,10 +38,17 @@ class Emitter {
 	}
 
 	function make_particle(){
-		trace('new $x $y');
+		// trace('new $x $y');
 		final size = 5;
-		var particle = new Particle(x, y, 5, Rl.Colors.LIGHTGRAY);
-		particle.set_trajectory(0.0, -100.0);
+		var particle = new Particle(x, y, size, Rl.Colors.LIGHTGRAY);
+
+		var x_min = 5;
+		var x_max = 200;
+		var x_speed = (x_max * Math.random()) + x_min;
+		var x_direction = Math.random() > 0.5 ? 1 : -1;
+		var x_acceleration = x_speed * x_direction;
+		trace('x : speed $x_speed * direction $x_direction = $x_acceleration');
+		particle.set_trajectory(x_acceleration, -100.0);
 		particles.push(particle);
 	}
 }
@@ -59,7 +66,6 @@ class Particle {
 
 	public function update(elapsed_seconds:Float) {
 		motion.compute_motion(elapsed_seconds);
-		// trace('update particle');ah 
 	}
 
 	public function draw() {
