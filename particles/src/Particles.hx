@@ -8,17 +8,21 @@ class Emitter {
 	var particles:Array<Particle>;
 	var x:Int;
 	var y:Int;
-	var maximum_particles:Int;
+	var maximum_particles:Int = 300;
+	var seconds_until_next_particle:Float = 0;
+	public var seconds_between_particles:Float = 0;
+	public var x_speed_minimum:Float = 0;
+	public var x_speed_maximum:Float = 400;
+	public var y_speed_minimum:Float = 200;
+	public var y_speed_maximum:Float = 1000;
+	public var particle_size:Float = 15;
 
-	public function new(x:Int, y:Int, maximum_particles:Int = 3) {
+	public function new(x:Int, y:Int) {
 		particles = [];
 		this.x = x;
 		this.y = y;
-		this.maximum_particles = maximum_particles;
 	}
 
-	var seconds_until_next_particle:Float = 0.0;
-	var seconds_between_particles:Float = 1.0;
 
 	public function update(elapsed_seconds:Float) {
 		for (p in particles) {
@@ -44,34 +48,40 @@ class Emitter {
 	}
 
 	function make_particle() {
-		// trace('new $x $y');
-		final size = 5;
-		final lifetime_seconds:Float = 2;
-		var particle = new Particle(x, y, size, Rl.Colors.LIGHTGRAY, lifetime_seconds);
+		final lifetime_seconds:Float = 5;
+		var color = Rl.Colors.LIGHTGRAY;
+		color.a = 80;
+		var particle = new Particle(x, y, Std.int(particle_size), color, lifetime_seconds);
 		set_random_trajectory(particle);
-
 		particles.push(particle);
 	}
 
 	function recycle_particle() {
 		for(p in particles){
 			if(p.is_expired){
-				p.reset_to(x, y);
+				p.reset_to(x, y, Std.int(particle_size));
 				set_random_trajectory(p);
-				// break out of the loop because only recylce one particle
+				// break out of the loop because only recycle one particle
 				break;
 			}
 		}
 	}
 
 	function set_random_trajectory(particle:Particle) {
-		var x_min = 5;
-		var x_max = 200;
-		var x_speed = (x_max * Math.random()) + x_min;
+		// set a random x speed
+		var x_speed = (x_speed_maximum * Math.random()) + x_speed_minimum;
+		
+		// choose left or right at random
 		var x_direction = Math.random() > 0.5 ? 1 : -1;
 		var x_acceleration = x_speed * x_direction;
-		trace('x : speed $x_speed * direction $x_direction = $x_acceleration');
-		particle.set_trajectory(x_acceleration, -100.0);
+
+		// set a random y speed
+		var y_speed = (y_speed_maximum * Math.random()) + y_speed_minimum;
+		// emitter is on 'floor' so always want the particles to ascend
+		var y_direction = -1;
+		var y_acceleration = y_speed * y_direction;
+
+		particle.set_trajectory(x_acceleration, y_acceleration);
 	}
 }
 
@@ -115,7 +125,7 @@ class Particle {
 		motion.acceleration.y = y_acceleration;
 	}
 
-	public function reset_to(x:Int, y:Int) {
+	public function reset_to(x:Int, y:Int, size:Int) {
 		// reset life time
 		is_expired = false;
 		lifetime_seconds_remaining = lifetime_seconds;
@@ -129,5 +139,8 @@ class Particle {
 		// set new position
 		motion.position.x = Std.int(x);
 		motion.position.y = Std.int(y);
+
+		// set new size
+		this.size = size;
 	}
 }
