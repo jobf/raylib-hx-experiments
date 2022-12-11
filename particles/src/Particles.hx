@@ -8,11 +8,13 @@ class Emitter {
 	var particles:Array<Particle>;
 	var x:Int;
 	var y:Int;
+	var maximum_particles:Int;
 
-	public function new(x:Int, y:Int) {
+	public function new(x:Int, y:Int, maximum_particles:Int = 3) {
 		particles = [];
 		this.x = x;
 		this.y = y;
+		this.maximum_particles = maximum_particles;
 	}
 
 	var seconds_until_next_particle:Float = 0.0;
@@ -24,7 +26,9 @@ class Emitter {
 			
 		}
 		if (seconds_until_next_particle <= 0) {
-			make_particle();
+			if(particles.length < maximum_particles){
+				make_particle();
+			}
 			seconds_until_next_particle = seconds_between_particles;
 		} else {
 			seconds_until_next_particle = seconds_until_next_particle - elapsed_seconds;
