@@ -28,6 +28,9 @@ class Emitter {
 			if (particles.length < maximum_particles) {
 				make_particle();
 			}
+			else{
+				recycle_particle();
+			}
 			seconds_until_next_particle = seconds_between_particles;
 		} else {
 			seconds_until_next_particle = seconds_until_next_particle - elapsed_seconds;
@@ -45,7 +48,23 @@ class Emitter {
 		final size = 5;
 		final lifetime_seconds:Float = 2;
 		var particle = new Particle(x, y, size, Rl.Colors.LIGHTGRAY, lifetime_seconds);
+		set_random_trajectory(particle);
 
+		particles.push(particle);
+	}
+
+	function recycle_particle() {
+		for(p in particles){
+			if(p.is_expired){
+				p.reset_to(x, y);
+				set_random_trajectory(p);
+				// break out of the loop because only recylce one particle
+				break;
+			}
+		}
+	}
+
+	function set_random_trajectory(particle:Particle) {
 		var x_min = 5;
 		var x_max = 200;
 		var x_speed = (x_max * Math.random()) + x_min;
@@ -53,7 +72,6 @@ class Emitter {
 		var x_acceleration = x_speed * x_direction;
 		trace('x : speed $x_speed * direction $x_direction = $x_acceleration');
 		particle.set_trajectory(x_acceleration, -100.0);
-		particles.push(particle);
 	}
 }
 
@@ -63,7 +81,7 @@ class Particle {
 	var motion:MotionComponent;
 	var lifetime_seconds:Float;
 	var lifetime_seconds_remaining:Float;
-	var is_expired:Bool;
+	public var is_expired(default, null):Bool;
 
 	public function new(x:Int, y:Int, size:Int, color:Color, lifetime_seconds:Float) {
 		this.color = color;
@@ -95,5 +113,21 @@ class Particle {
 	public function set_trajectory(x_acceleration:Float, y_acceleration:Float) {
 		motion.acceleration.x = x_acceleration;
 		motion.acceleration.y = y_acceleration;
+	}
+
+	public function reset_to(x:Int, y:Int) {
+		// reset life time
+		is_expired = false;
+		lifetime_seconds_remaining = lifetime_seconds;
+
+		// reset motion
+		motion.acceleration.x = 0;
+		motion.acceleration.y = 0;
+		motion.velocity.x = 0;
+		motion.velocity.y = 0;
+
+		// set new position
+		motion.position.x = Std.int(x);
+		motion.position.y = Std.int(y);
 	}
 }
