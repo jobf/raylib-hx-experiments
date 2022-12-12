@@ -7,7 +7,9 @@ class PlayScene extends Scene{
 		ship = new Ship(30, 30);
 	}
 
-	public function update(elapsed_seconds:Float) {}
+	public function update(elapsed_seconds:Float) {
+		ship.update(elapsed_seconds);
+	}
 
 	public function draw() {
 		ship.draw();
