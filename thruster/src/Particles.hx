@@ -34,13 +34,10 @@ class Emitter {
 	public var y_speed_maximum:Float = 1000;
 
 	/** width and height of particles **/
-	public var particle_size:Float = 15;
-
-	/** how many seconds the particle will ascend before descending again **/
-	public var particle_ascend_seconds:Float = 0.75;
+	public var particle_size:Float = 2;
 
 	/** how many seconds the particle will be active before it can be recycled **/
-	public var particle_life_seconds:Float = 5;
+	public var particle_life_seconds:Float = 2.5;
 
 	public function new(x:Int, y:Int) {
 		particles = [];
@@ -71,9 +68,9 @@ class Emitter {
 	}
 
 	function make_particle() {
-		var color = Rl.Colors.LIGHTGRAY;
+		var color = Rl.Colors.ORANGE;
 		color.a = 80;
-		var particle = new Particle(x, y, Std.int(particle_size), color, particle_life_seconds, particle_ascend_seconds);
+		var particle = new Particle(x, y, Std.int(particle_size), color, particle_life_seconds);
 		set_random_trajectory(particle);
 		particles.push(particle);
 	}
@@ -99,8 +96,8 @@ class Emitter {
 
 		// set a random y speed
 		var y_speed = (y_speed_maximum * Math.random()) + y_speed_minimum;
-		// emitter is on 'floor' so always want the particles to ascend initially
-		var y_direction = -1;
+		// emitter is poiting towards floor so particle y should increase
+		var y_direction = 1;
 		var y_acceleration = y_speed * y_direction;
 
 		particle.set_trajectory(x_acceleration, y_acceleration);
@@ -113,22 +110,16 @@ class Particle {
 	var motion:MotionComponent;
 	var lifetime_seconds:Float;
 	var lifetime_seconds_remaining:Float;
-	var acceleration_seconds:Float;
-	var acceleration_seconds_remaining:Float;
-	var is_ascending:Bool;
 
 	public var is_expired(default, null):Bool;
 
-	public function new(x:Int, y:Int, size:Int, color:Color, lifetime_seconds:Float, acceleration_seconds:Float) {
+	public function new(x:Int, y:Int, size:Int, color:Color, lifetime_seconds:Float) {
 		this.color = color;
 		this.size = size;
 		this.lifetime_seconds = lifetime_seconds;
 		this.lifetime_seconds_remaining = lifetime_seconds;
-		this.acceleration_seconds = acceleration_seconds;
-		this.acceleration_seconds_remaining = acceleration_seconds;
 		is_expired = false;
 		this.motion = new MotionComponent(x, y);
-		is_ascending = true;
 	}
 
 	public function update(elapsed_seconds:Float) {
@@ -137,15 +128,6 @@ class Particle {
 
 			// calculate new position
 			motion.compute_motion(elapsed_seconds);
-
-			// enough time has passed, stop accelerating away from the ground
-			acceleration_seconds_remaining -= elapsed_seconds;
-			if (is_ascending && acceleration_seconds_remaining <= 0) {
-				// set acceleration towards the floor
-				motion.acceleration.y = motion.acceleration.y * -1;
-				// change ascending state so this branch is not run again
-				is_ascending = false;
-			}
 
 			// enough enough time has passed, expire the particle so it can be recycled
 			lifetime_seconds_remaining -= elapsed_seconds;
@@ -177,10 +159,6 @@ class Particle {
 		// reset life time
 		is_expired = false;
 		lifetime_seconds_remaining = lifetime_seconds;
-
-		// reset ascension limiter
-		is_ascending = true;
-		acceleration_seconds_remaining = acceleration_seconds;
 
 		// reset motion
 		motion.acceleration.x = 0;
