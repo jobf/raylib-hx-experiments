@@ -1,3 +1,4 @@
+import Rl.Vector2;
 import Physics.MotionComponent;
 
 using Physics.MotionComponentLogic;
@@ -110,6 +111,11 @@ class Emitter {
 		var y_acceleration = y_speed * y_direction;
 
 		particle.set_trajectory(x_acceleration, y_acceleration);
+	}
+
+	public function set_position(x:Int, y:Int) {
+		this.x = x;
+		this.y = y;
 	}
 }
 
