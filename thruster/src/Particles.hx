@@ -39,6 +39,9 @@ class Emitter {
 	/** how many seconds the particle will be active before it can be recycled **/
 	public var particle_life_seconds:Float = 2.5;
 
+	/** if the emitter should emit particles or not **/
+	public var is_emitting:Bool = false;
+
 	public function new(x:Int, y:Int) {
 		particles = [];
 		this.x = x;
@@ -49,6 +52,12 @@ class Emitter {
 		for (p in particles) {
 			p.update(elapsed_seconds);
 		}
+
+		if(!is_emitting){
+			// do not make particles when not emitting
+			return;
+		}
+
 		if (seconds_until_next_particle <= 0) {
 			if (particles.length < maximum_particles) {
 				make_particle();

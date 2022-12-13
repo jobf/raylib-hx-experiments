@@ -19,7 +19,7 @@ class Ship{
 
 	public function draw() {
 		particles_thruster.draw();
-		
+
 		var top = RlVector2.create(motion.position.x, motion.position.y);
 		var left = RlVector2.create(motion.position.x - width_half, motion.position.y + height);
 		var right = RlVector2.create(motion.position.x + width_half, motion.position.y + height);
@@ -40,4 +40,13 @@ class Ship{
 	var width_half:Float;
 
 	var particles_thruster:Emitter;
+
+	public function set_acceleration(should_enable:Bool):Void {
+		if(should_enable){
+			particles_thruster.is_emitting = true;
+		}
+		else{
+			particles_thruster.is_emitting = false;
+		}
+	}
 }
