@@ -1,6 +1,5 @@
 import Rl;
 import Particles.Emitter;
-import Rl.RlVector2;
 import Physics.MotionComponent;
 using Physics.MotionComponentLogic;
 
@@ -8,9 +7,14 @@ class Ship{
 	var motion:MotionComponent;
 	var triangle:Triangle;
 	var gravity:Float = 10;
+	var rotation:Float = 0;
+	var thruster_position:Point;
+	var scale = 6;
+
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
 		triangle = new Triangle();
+		thruster_position = {x:  0.0, y: 3.0 };
 		// give ship some gravity
 		motion.acceleration.y = gravity;
 		width = 18;
@@ -21,16 +25,33 @@ class Ship{
 
 	public function update(elapsed_seconds:Float){
 		motion.compute_motion(elapsed_seconds);
-		var x_particles = Std.int(motion.position.x);
-		var y_particles = Std.int(motion.position.y + height);
+		var rotation_sin = Math.sin(rotation);
+		var rotation_cos = Math.cos(rotation);
+		
+		// rotate
+		var thruster_position_translated:Point = {
+			x: thruster_position.x * rotation_cos - thruster_position.y * rotation_sin,
+			y: thruster_position.x * rotation_sin + thruster_position.y * rotation_cos
+		};
+
+		// scale
+		thruster_position_translated.x = thruster_position_translated.x * scale;
+		thruster_position_translated.y = thruster_position_translated.y * scale;
+
+		// transform
+		thruster_position_translated.x = thruster_position_translated.x + motion.position.x;
+		thruster_position_translated.y = thruster_position_translated.y + motion.position.y;
+		
+		var x_particles = Std.int(thruster_position_translated.x);
+		var y_particles = Std.int(thruster_position_translated.y);
+		
 		particles_thruster.set_position(x_particles, y_particles);
 		particles_thruster.update(elapsed_seconds);
+		rotation = rotation + (0.05 * rotation_direction);
 	}
 
 	public function draw() {
 		particles_thruster.draw();
-		var rotation = 0;
-		var scale = 6;
 		DrawTrianglePoints(triangle.points, motion.position.x, motion.position.y, rotation, scale, Rl.Colors.GRAY);
 	}
 
@@ -55,6 +76,10 @@ class Ship{
 			// give ship some gravity
 			motion.acceleration.y = gravity;
 		}
+	}
+	var rotation_direction:Int = 0;
+	public function set_rotation_direction(direction:Int) {
+		rotation_direction = direction;
 	}
 }
 
