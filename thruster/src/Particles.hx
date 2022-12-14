@@ -16,32 +16,34 @@ class Emitter {
 	var particles:Array<Particle>;
 
 	/** size of particle pool **/
-	var maximum_particles:Int = 300;
+	var maximum_particles:Int = 100;
 	
 	/** amount of time between particle emissions emission **/
-	public var seconds_between_particles:Float = 0;
+	public var seconds_between_particles:Float = 0.003;
 	var seconds_until_next_particle:Float = 0;
 
 	/** lowest x speed used when determining random x acceleration **/
-	public var x_speed_minimum:Float = 0;
+	public var x_speed_minimum:Float = 100;
 
 	/** highest x speed used when determining random y acceleration **/
-	public var x_speed_maximum:Float = 400;
+	public var x_speed_maximum:Float = 1000;
 
 	/** lowest y speed used when determining random y acceleration **/
-	public var y_speed_minimum:Float = 200;
+	public var y_speed_minimum:Float = 400;
 
 	/** highest y speed used when determining random y acceleration **/
 	public var y_speed_maximum:Float = 1000;
 
 	/** width and height of particles **/
-	public var particle_size:Float = 2;
+	public var particle_size:Float = 4;
 
 	/** how many seconds the particle will be active before it can be recycled **/
 	public var particle_life_seconds:Float = 2.5;
 
 	/** if the emitter should emit particles or not **/
 	public var is_emitting:Bool = false;
+
+	public var rotation:Float = 0;
 
 	public function new(x:Int, y:Int) {
 		particles = [];
@@ -79,9 +81,11 @@ class Emitter {
 
 	function make_particle() {
 		var color = Rl.Colors.ORANGE;
-		color.a = 80;
+		final alpha_min = 80;
+		// randomise alpha
+		color.a = Std.int((Math.random() * 255) + alpha_min);
 		var particle = new Particle(x, y, Std.int(particle_size), color, particle_life_seconds);
-		set_random_trajectory(particle);
+		set_trajectory(particle);
 		particles.push(particle);
 	}
 
@@ -89,26 +93,21 @@ class Emitter {
 		for (p in particles) {
 			if (p.is_expired) {
 				p.reset_to(x, y, Std.int(particle_size));
-				set_random_trajectory(p);
-				// break out of the loop because only recycle one particle
+				set_trajectory(p);
+				// break out of the loop because only want to recycle one particle
 				break;
 			}
 		}
 	}
 
-	function set_random_trajectory(particle:Particle) {
-		// set a random x speed
+	function set_trajectory(particle:Particle){
+		// some variation for x and y
 		var x_speed = (x_speed_maximum * Math.random()) + x_speed_minimum;
-
-		// choose left or right at random
-		var x_direction = Math.random() > 0.5 ? 1 : -1;
-		var x_acceleration = x_speed * x_direction;
-
-		// set a random y speed
 		var y_speed = (y_speed_maximum * Math.random()) + y_speed_minimum;
-		// emitter is poiting towards floor so particle y should increase
-		var y_direction = 1;
-		var y_acceleration = y_speed * y_direction;
+
+		// calculate acceleration based on rotation
+		var x_acceleration = Math.sin(rotation) * -x_speed;
+		var y_acceleration = -Math.cos(rotation) * -y_speed;
 
 		particle.set_trajectory(x_acceleration, y_acceleration);
 	}

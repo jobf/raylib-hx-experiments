@@ -6,21 +6,27 @@ using Physics.MotionComponentLogic;
 class Ship{
 	var motion:MotionComponent;
 	var triangle:Triangle;
-	var gravity:Float = 10;
+	var gravity:Float = 250;
 	var rotation:Float = 0;
 	var thruster_position:Point;
 	var scale = 6;
+	var particles_thruster:Emitter;
 
 	public function new(x:Int, y:Int) {
+		// set up motion
 		motion = new MotionComponent(x, y);
+		// set deceleration for slowing down the ship when notr accelerating
+		motion.deceleration.x = gravity * 0.5;
+		motion.deceleration.y = gravity * 0.5;
+
+		// set up shape model
 		triangle = new Triangle();
+
+		// set up particles
 		thruster_position = {x:  0.0, y: 3.0 };
-		// give ship some gravity
-		motion.acceleration.y = gravity;
-		width = 18;
-		width_half = width * 0.5;
-		height = 20;
-		particles_thruster = new Emitter(x, y + height);
+		var x_particles = Std.int(thruster_position.x);
+		var y_particles = Std.int(thruster_position.y);
+		particles_thruster = new Emitter(x_particles, y_particles);
 	}
 
 	public function update(elapsed_seconds:Float){
@@ -44,10 +50,11 @@ class Ship{
 		
 		var x_particles = Std.int(thruster_position_translated.x);
 		var y_particles = Std.int(thruster_position_translated.y);
-		
+
 		particles_thruster.set_position(x_particles, y_particles);
 		particles_thruster.update(elapsed_seconds);
 		rotation = rotation + (0.05 * rotation_direction);
+		particles_thruster.rotation = rotation;
 	}
 
 	public function draw() {
@@ -55,26 +62,19 @@ class Ship{
 		DrawTrianglePoints(triangle.points, motion.position.x, motion.position.y, rotation, scale, Rl.Colors.GRAY);
 	}
 
-
-	var width:Int;
-
-	var height:Int;
-
-	var width_half:Float;
-
-	var particles_thruster:Emitter;
-
 	public function set_acceleration(should_enable:Bool):Void {
+		
 		if(should_enable){
 			particles_thruster.is_emitting = true;
-			// give ship some thrust
-			motion.acceleration.y = -(gravity * 3);
-
+			// give ship some thrust, using rotation to determine direction
+			motion.acceleration.x = Math.sin(rotation) * gravity;
+			motion.acceleration.y = -Math.cos(rotation) * gravity;
 		}
 		else{
 			particles_thruster.is_emitting = false;
-			// give ship some gravity
-			motion.acceleration.y = gravity;
+			// stop accelerating, so deceleration can come into effect
+			motion.acceleration.x = 0;
+			motion.acceleration.y = 0;
 		}
 	}
 	var rotation_direction:Int = 0;

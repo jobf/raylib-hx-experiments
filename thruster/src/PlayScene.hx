@@ -3,7 +3,9 @@ import Controller;
 
 class PlayScene extends Scene {
 	public function init() {
-		ship = new Ship(30, 30);
+		var x_center = Std.int(bounds.width * 0.5);
+		var y_center = Std.int(bounds.height * 0.5);
+		ship = new Ship(x_center, y_center);
 		controller = new Controller({
 			// on_released_up: on_released_up,
 			on_released_right: () -> ship.set_rotation_direction(0),

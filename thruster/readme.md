@@ -1,4 +1,9 @@
-Code in here will use the emitter to represent thruster on a space ship.
+Code in here builds on the Particles experiments.
+
+It uses the emitter to represent a thruster on a space ship.
+
+ - cursor keys 🠔 🠖 rotate the ship
+ - d key thrust
 
 You need haxe and raylib-hx.
 
