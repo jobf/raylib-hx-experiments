@@ -1,3 +1,4 @@
+import Rl;
 import Particles.Emitter;
 import Rl.RlVector2;
 import Physics.MotionComponent;
@@ -5,9 +6,11 @@ using Physics.MotionComponentLogic;
 
 class Ship{
 	var motion:MotionComponent;
+	var triangle:Triangle;
 	var gravity:Float = 10;
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
+		triangle = new Triangle();
 		// give ship some gravity
 		motion.acceleration.y = gravity;
 		width = 18;
@@ -26,17 +29,9 @@ class Ship{
 
 	public function draw() {
 		particles_thruster.draw();
-
-		var top = RlVector2.create(motion.position.x, motion.position.y);
-		var left = RlVector2.create(motion.position.x - width_half, motion.position.y + height);
-		var right = RlVector2.create(motion.position.x + width_half, motion.position.y + height);
-		
-		Rl.drawTriangle(
-			top,
-			left,
-			right,
-			Rl.Colors.GRAY
-		);
+		var rotation = 0;
+		var scale = 6;
+		DrawTrianglePoints(triangle.points, motion.position.x, motion.position.y, rotation, scale, Rl.Colors.GRAY);
 	}
 
 
@@ -61,4 +56,55 @@ class Ship{
 			motion.acceleration.y = gravity;
 		}
 	}
+}
+
+@:structInit
+class Point{
+	public var x:Float;
+	public var y:Float;
+}
+
+/** isosceles triangle model **/
+class Triangle {
+	public var a_point:Point;
+	public var b_point:Point;
+	public var c_point:Point;
+	public var points:Array<Point>;
+
+	public function new() {
+		a_point = {x:  0.0, y: -6.0};
+		b_point = {x: -3.0, y:  3.0};
+		c_point = {x:  3.0, y:  3.0};
+		points = [a_point, b_point, c_point];
+	}
+}
+
+
+function DrawTrianglePoints(points:Array<Point>, x_center:Float, y_center:Float, rotation:Float, scale:Float, color:Color){
+	var rotation_sin = Math.sin(rotation);
+	var rotation_cos = Math.cos(rotation);
+
+	// first apply rotation to the model points
+	var points_transformed:Array<Point> = [for(i in 0...points.length) {
+		x: points[i].x * rotation_cos - points[i].y * rotation_sin,
+		y: points[i].x * rotation_sin + points[i].y * rotation_cos
+	}];
+
+	// now scale the transformed points (change size)
+	for(i in 0...points.length){
+		points_transformed[i].x = points_transformed[i].x * scale;
+		points_transformed[i].y = points_transformed[i].y * scale;
+	}
+
+	// now translate the transofrmed point positions
+	for(i in 0...points.length){
+		points_transformed[i].x = points_transformed[i].x + x_center;
+		points_transformed[i].y = points_transformed[i].y + y_center;
+	}
+
+	// convert points to rl vectors and draw
+	var a = Rl.RlVector2.create(points_transformed[0].x, points_transformed[0].y);
+	var b = Rl.RlVector2.create(points_transformed[1].x, points_transformed[1].y);
+	var c = Rl.RlVector2.create(points_transformed[2].x, points_transformed[2].y);
+	Rl.drawTriangle(a, b, c, color);
 }
