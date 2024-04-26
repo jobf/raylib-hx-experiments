@@ -1,96 +1,76 @@
 import Rl;
 
 class MotionComponent {
+	//  Current x,y position in world space
+	public var position_x:Float;
+	public var position_y:Float;
+
+	// Previous x,y position in world space
+	public var position_previous_x:Float;
+	public var position_previous_y:Float;
+
+	// Current x,y velocity
+	public var velocity_x:Float = 0;
+	public var velocity_y:Float = 0;
+
+	// Maximum x,y velocity permitted
+	public var velocity_maximum_x:Float = 0;
+	public var velocity_maximum_y:Float = 0;
+
+	// How much velocity will speed up on x,y axes
+	public var acceleration_x:Float = 0;
+	public var acceleration_y:Float = 0;
+
+	// How much velocity will slow down on x,y axes
+	// Note: only takes effect when Acceleration is zero
+	public var deceleration_x:Float = 0;
+	public var deceleration_y:Float = 0;
+
 	public function new(x:Int, y:Int) {
-		position = RlVector2.create(x, y);
-		position_previous = RlVector2.create(x, y);
-
-		velocity = RlVector2.create(0,0);
-		velocity_maximum = RlVector2.create(0,0);
-
-		acceleration = RlVector2.create(0,0);
-		deceleration = RlVector2.create(0,0);
+		position_x = x;
+		position_y = y;
+		position_previous_x = x;
+		position_previous_y = y;
 	}
-
-	/**
-	* Current x,y position in world space
-	**/
-	public var position:Vector2;
-
-	/**
-	* Previous x,y position in world space
-	**/
-	public var position_previous:Vector2;
-
-	/**
-	* Current x,y velocity
-	**/
-	public var velocity:Vector2;
-
-	/**
-	* Maximum x,y velocity permitted
-	**/
-	public var velocity_maximum:Vector2;
-
-	/**
-	* How much velocity will speed up on x,y axes
-	**/
-	public var acceleration:Vector2;
-
-	/**
-	* How much velocity will slow down on x,y axes
-	* Note: only takes effect when Acceleration is zero
-	**/
-	public var deceleration:Vector2;
 }
 
 class MotionComponentLogic {
 	/**
-	* Updates the speed and position of the MotionComponent 
-	* 2 deltas are calculated per axis to "help with higher fidelity framerate-independent motion.
-	* Based on FlxObject UpdateMotion https://github.com/HaxeFlixel/flixel/blob/dev/flixel/FlxObject.hx#L882
-	* @param motion				The motion component to be updated
-	* @param elapsed_seconds	The amount of time passed since last update frame
+	 * Updates the speed and position of the MotionComponent 
+	 * 2 deltas are calculated per axis to "help with higher fidelity framerate-independent motion.
+	 * Based on FlxObject UpdateMotion https://github.com/HaxeFlixel/flixel/blob/dev/flixel/FlxObject.hx#L882
+	 * @param motion				The motion component to be updated
+	 * @param elapsed_seconds	The amount of time passed since last update frame
 	**/
 	public static function compute_motion(motion:MotionComponent, elapsed_seconds:Float) {
 		// update x axis position and speed
-		var vel_delta = 0.5 * (compute_axis(
-			motion.velocity.x,
-			motion.acceleration.x,
-			motion.deceleration.x,
-			motion.velocity_maximum.x,
-			elapsed_seconds
-			) - motion.velocity.x);
-			motion.velocity.x = motion.velocity.x + vel_delta;
-			var movement_delta = motion.velocity.x * elapsed_seconds;
-			// keep record of previous position before setting new position based on the movement delta
-			motion.position_previous.x = motion.position.x;
-			motion.position.x = motion.position.x + movement_delta;
-			
+		var vel_delta = 0.5 * (compute_axis(motion.velocity_x, motion.acceleration_x, motion.deceleration_x, motion.velocity_maximum_x, elapsed_seconds)
+			- motion.velocity_x);
+		motion.velocity_x = motion.velocity_x + vel_delta;
+		var movement_delta = motion.velocity_x * elapsed_seconds;
+		// keep record of previous position before setting new position based on the movement delta
+		motion.position_previous_x = motion.position_x;
+		motion.position_x = motion.position_x + movement_delta;
+
 		// update y axis position and speed
-		var vel_delta = 0.5 * (compute_axis(
-			motion.velocity.y,
-			motion.acceleration.y,
-			motion.deceleration.y,
-			motion.velocity_maximum.y,
-			elapsed_seconds
-			) - motion.velocity.y);
-			motion.velocity.y = motion.velocity.y + vel_delta;
-			var movement_delta = motion.velocity.y * elapsed_seconds;
-			// keep record of previous position before setting new position based on the movement delta
-			motion.position_previous.y = motion.position.y;
-			motion.position.y = motion.position.y + movement_delta;
-		}
-		
+		var vel_delta = 0.5 * (compute_axis(motion.velocity_y, motion.acceleration_y, motion.deceleration_y, motion.velocity_maximum_y, elapsed_seconds)
+			- motion.velocity_y);
+		motion.velocity_y = motion.velocity_y + vel_delta;
+		var movement_delta = motion.velocity_y * elapsed_seconds;
+		// keep record of previous position before setting new position based on the movement delta
+		motion.position_previous_y = motion.position_y;
+		motion.position_y = motion.position_y + movement_delta;
+	}
+
 	/**
-	* Takes a starting velocity and some other factors and returns an adjusted velocity
-	* Based on FlxVelocity ComputeVelocity - https://github.com/HaxeFlixel/flixel/blob/dev/flixel/math/FlxVelocity.hx#L223
-	* @param	velocity				The velocity that should be adjusted
-	* @param	acceleration		Rate at which the velocity is changing.
-	* @param	deceleration		How much the velocity changes if Acceleration is not set.
-	* @param	velocity_maximum	An absolute value cap for the velocity (0 for no cap).
-	* @param	elapsed_seconds	The amount of time passed since last update frame
-	* @return	The adjusted Velocity value.
+	 * Takes a starting velocity and some other factors and returns an adjusted velocity
+	 * Based on FlxVelocity ComputeVelocity - https://github.com/HaxeFlixel/flixel/blob/dev/flixel/math/FlxVelocity.hx#L223
+	 * @param	velocity				The velocity that should be adjusted
+	 * @param	acceleration		Rate at which the velocity is changing.
+	 * @param	deceleration		How much the velocity changes if Acceleration is not set.
+	 * @param	velocity_maximum	An absolute value cap for the velocity (0 for no cap).
+	 * @param	elapsed_seconds	The amount of time passed since last update frame
+	 * @return	The adjusted Velocity value.
 	**/
 	static function compute_axis(velocity:Float, acceleration:Float, deceleration:Float, velocity_maximum:Float, elapsed_seconds:Float):Float {
 		// velocity and acceleration are bipolar so can either be

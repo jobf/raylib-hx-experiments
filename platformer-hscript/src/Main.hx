@@ -1,3 +1,5 @@
+import hscript.Interp;
+import hscript.Parser;
 import Physics.MotionComponent;
 import Rl;
 import Core;
@@ -213,10 +215,12 @@ class Player {
 	var y_acceleration:Float = 1500;
 
 	public var is_touching_ground(default, null):Bool = false;
+
 	var jump_is_in_progress:Bool = false;
 
 	/** how long before jump timer should reset **/
 	var jump_duration_seconds:Float = 0.35;
+
 	var jump_timer_seconds:Float = 0.0;
 
 	/** how much acceleration to apply on y axis when jumping aka jump power **/
@@ -224,95 +228,105 @@ class Player {
 
 	public function new(x:Int, y:Int) {
 		motion = new MotionComponent(x, y);
-		motion.acceleration.y = y_acceleration;
-		motion.deceleration.x = x_deceleration;
-		motion.velocity_maximum.x = x_velocity_max;
+		motion.acceleration_y = y_acceleration;
+		motion.deceleration_x = x_deceleration;
+		motion.velocity_maximum_x = x_velocity_max;
 		var width = 22;
 		var height = 48;
-		rectangle = Rl.Rectangle.create(motion.position.x, motion.position.y, width, height);
+		rectangle = Rl.Rectangle.create(motion.position_x, motion.position_y, width, height);
+		ScriptContext.init();
 	}
 
-	public function update(elapsed_seconds:Float) {
-		if (is_touching_ground) {
-			motion.acceleration.y = 0;
-		} else {
-			if (jump_is_in_progress && jump_timer_seconds > 0) {
-				jump_timer_seconds -= elapsed_seconds;
-			}
-			else{
-				motion.acceleration.y = y_acceleration;
-			}
+	var script = '
+	if (player.is_touching_ground) {
+		player.motion.acceleration_y = 0;
+	}
+	else {
+		if (player.jump_is_in_progress && player.jump_timer_seconds > 0) {
+			player.jump_timer_seconds -= elapsed_seconds;
 		}
+		else{
+			player.motion.acceleration_y = player.y_acceleration;
+		}
+	}
 
+	player.compute_motion(elapsed_seconds);
+	';
+
+	public function update(elapsed_seconds:Float) {
+		ScriptContext.run(script, this, elapsed_seconds);
+	}
+
+	public function compute_motion(elapsed_seconds:Float) {
 		motion.compute_motion(elapsed_seconds);
-		rectangle.x = motion.position.x;
-		rectangle.y = motion.position.y;
 	}
 
 	public function draw() {
-		var x = Std.int(rectangle.x);
-		var y = Std.int(rectangle.y);
+		rectangle.x = motion.position_x;
+		rectangle.y = motion.position_y;
+		var x = Std.int(motion.position_x);
+		var y = Std.int(motion.position_y);
 		var width = Std.int(rectangle.width);
 		var height = Std.int(rectangle.height);
 		Rl.drawRectangle(x, y, width, height, color);
 	}
 
 	public function accelerate_x(x_direction:Int) {
-		motion.acceleration.x = x_direction * x_acceleration;
-		trace('new x acceleration ${motion.acceleration.x}');
+		motion.acceleration_x = x_direction * x_acceleration;
+		trace('new x acceleration ${motion.acceleration_x}');
 	}
 
-	public function apply_brakes_x(){
-		motion.acceleration.x = 0;
+	public function apply_brakes_x() {
+		motion.acceleration_x = 0;
 	}
 
 	public function stop() {
-		motion.acceleration.x = 0;
-		motion.acceleration.y = 0;
-		motion.velocity.x = 0;
-		motion.velocity.y = 0;
+		motion.acceleration_x = 0;
+		motion.acceleration_y = 0;
+		motion.velocity_x = 0;
+		motion.velocity_y = 0;
 		trace('player stop x y');
 	}
-	
+
 	public function stop_x() {
-		motion.acceleration.x = 0;
-		motion.velocity.x = 0;
+		motion.acceleration_x = 0;
+		motion.velocity_x = 0;
 		trace('player stop x');
 	}
-	
+
 	public function stop_y() {
-		motion.acceleration.y = 0;
-		motion.velocity.y = 0;
+		motion.acceleration_y = 0;
+		motion.velocity_y = 0;
 		trace('player stop y');
 	}
 
 	public function hasNonZeroVelocity():Bool {
-		return motion.velocity.x != 0 || motion.velocity.y != 0;
+		return motion.velocity_x != 0 || motion.velocity_y != 0;
 	}
 
 	public function wasMovingRight() {
-		return motion.position_previous.x < motion.position.x;
+		return motion.position_previous_x < motion.position_x;
 	}
 
 	public function wasMovingLeft() {
-		return motion.position_previous.x > motion.position.x;
+		return motion.position_previous_x > motion.position_x;
 	}
 
 	public function wasMovingDown() {
-		return motion.position_previous.y < motion.position.y;
+		return motion.position_previous_y < motion.position_y;
 	}
 
 	public function wasMovingUp() {
-		return motion.position_previous.y > motion.position.y;
+		return motion.position_previous_y > motion.position_y;
 	}
 
 	public function set_x(x:Float) {
-		motion.position.x = x;
+		motion.position_x = x;
 		rectangle.x = x;
 	}
 
 	public function set_y(y:Float) {
-		motion.position.y = y;
+		motion.position_y = y;
 		rectangle.y = y;
 	}
 
@@ -323,12 +337,27 @@ class Player {
 
 	public function jump() {
 		if (is_touching_ground) {
-			motion.acceleration.y = -jump_acceleration;
+			motion.acceleration_y = -jump_acceleration;
 			jump_is_in_progress = true;
 			jump_timer_seconds = jump_duration_seconds;
 			set_touching_ground(false);
 		}
 	}
+}
 
+class ScriptContext {
+	static var parser:Parser;
+	static var interp:Interp;
+
+	public static function init() {
+		parser = new Parser();
+		interp = new hscript.Interp();
+	}
+
+	public static function run(script:String, player:Player, elapsed_seconds:Float) {
+		var ast = parser.parseString(script);
+		interp.variables.set("player", player);
+		interp.variables.set("elapsed_seconds", elapsed_seconds);
+		interp.execute(ast);
 	}
 }

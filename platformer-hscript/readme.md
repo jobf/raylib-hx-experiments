@@ -1,6 +1,6 @@
 Code in here builds on exploration in `first-steps`.
 
-It's a simple platformer.
+It's a simple platformer. With hscript?
 
 You need haxe and raylib-hx.
 
