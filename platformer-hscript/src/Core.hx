@@ -5,7 +5,6 @@ class Game {
 	var windowBounds:RectangleGeometry;
 	var x_viewport_center:Int;
 	var y_viewport_center:Int;
-	public var editor(default, null):Editor;
 
 	public var camera(default, null):Camera2D;
 
@@ -16,22 +15,12 @@ class Game {
 
 		camera = Rl.Camera2D.create(Rl.Vector2.create(0, 0), Rl.Vector2.create(0, 0));
 
-		
-		var width_editor = Std.int(windowBounds.width * 0.3);
-		editor = new Editor({
-			x: 0,
-			y: 0,
-			width: width_editor,
-			height: 30
-		}, windowBounds.width);
-
 		current_scene = scene_constructor(this);
 		current_scene.init();
 	}
 
 	public function update(elapsed_seconds:Float) {
 		current_scene.update(elapsed_seconds);
-		editor.update();
 	}
 
 	public function draw() {

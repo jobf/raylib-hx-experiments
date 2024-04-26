@@ -58,7 +58,6 @@ class PlatformerScene extends Scene {
 
 		var center_scene = Std.int(bounds.width * 0.5);
 		player = new Player(center_scene, 0);
-		player.editor_bind(game.editor);
 		// Raygui.GuiLoadStyle() todo - update raylib gui?
 
 		controller = new Controller({
@@ -71,7 +70,6 @@ class PlatformerScene extends Scene {
 			// on_mouse_press_right: on_mouse_press_right,
 			// on_mouse_press_left: on_mouse_press_left
 		});
-
 	}
 
 	public function update(elapsed_seconds:Float) {
@@ -170,14 +168,11 @@ class PlatformerScene extends Scene {
 	}
 
 	public function draw() {
-
 		for (platform in platforms) {
 			platform.draw();
 		}
 		player.draw();
 	}
-
-	var editor:Editor;
 }
 
 @:structInit
@@ -199,7 +194,7 @@ class Player {
 	public var color:RlColor = Rl.Colors.ORANGE;
 
 	var motion:MotionComponent;
-	
+
 	/** the maximum speed on x axis **/
 	var x_velocity_max:Float = 250;
 
@@ -211,11 +206,12 @@ class Player {
 
 	/** how fast to slow down when not accelerating left or right **/
 	var x_deceleration:Float = 1900;
+
 	// var x_deceleration:Float = 900; when turning?
 
 	/** how fast to accelerate towards the ground **/
 	var y_acceleration:Float = 1500;
-	
+
 	public var is_touching_ground(default, null):Bool = false;
 	var jump_is_in_progress:Bool = false;
 
@@ -334,46 +330,5 @@ class Player {
 		}
 	}
 
-	public function editor_bind(editor:Editor) {
-		editor.add_slider(
-			"x_acceleration",
-			x_acceleration,
-			0,
-			5000,
-			value -> x_acceleration = value
-		);
-
-		// todo , set up changing these
-		// editor.add_slider(
-		// 	"x_velocity_max",
-		// 	x_velocity_max,
-		// 	10,
-		// 	5000,
-		// 	value -> x_velocity_max = value
-		// );
-
-		// editor.add_slider(
-		// 	"x_deceleration",
-		// 	x_deceleration,
-		// 	10,
-		// 	3000,
-		// 	value -> x_deceleration = value
-		// );
-
-editor.add_slider(
-	"jump_acceleration",
-	jump_acceleration,
-	0,
-	5000,
-	value -> jump_acceleration = value
-);
-
-		editor.add_slider(
-			"jump_duration",
-			jump_duration_seconds,
-			0.1,
-			2,
-			value -> jump_duration_seconds = value
-		);
 	}
 }
